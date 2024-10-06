@@ -58,6 +58,49 @@ public class MainWindow : Window
 
         ImGui.Unindent();
 
+        var chocoboRacing = Plugin.Configuration.ChocoboRacingConfig.Enabled;
+        if (ImGui.Checkbox("Enable Feather to the Metal", ref chocoboRacing))
+        {
+            Plugin.Configuration.ChocoboRacingConfig.Enabled = chocoboRacing;
+            Plugin.Configuration.SaveConfig();
+        }
+
+        ImGui.Indent();
+        if (!chocoboRacing)
+        {
+            ImGui.TextWrapped($"Automatically queue for chocobo races and (optionally) hold W while in the race to automatically run.");
+        }
+        else
+        {
+            if (ImGui.Button("Open Feather to the Metal Window"))
+            {
+                _plugin.ChocoboRacingUI.IsOpen = !_plugin.ChocoboRacingUI.IsOpen;
+            }
+            ImGuiEx.Tooltip("Also valid: '/rbtoolbox race'");
+
+            var moveEnabled = Plugin.Configuration.ChocoboRacingConfig.AutoRun;
+            if (ImGui.Checkbox("Automatically run inside of race", ref moveEnabled))
+            {
+                Plugin.Configuration.ChocoboRacingConfig.AutoRun = moveEnabled;
+                Plugin.Configuration.SaveConfig();
+            }
+
+            var alwaysRun = Plugin.Configuration.ChocoboRacingConfig.AlwaysRun;
+            if (ImGui.Checkbox("Always Run (Ignore stamina/lathered status)", ref alwaysRun))
+            {
+                Plugin.Configuration.ChocoboRacingConfig.AlwaysRun = alwaysRun;
+                Plugin.Configuration.SaveConfig();
+            }
+
+            var stopAtMaxRank = Plugin.Configuration.ChocoboRacingConfig.StopAtMaxRank;
+            if (ImGui.Checkbox("Stop at Max Rank", ref stopAtMaxRank))
+            {
+                Plugin.Configuration.ChocoboRacingConfig.StopAtMaxRank = stopAtMaxRank;
+                Plugin.Configuration.SaveConfig();
+            }
+        }
+        ImGui.Unindent();
+
         // var sortEnabled = Plugin.Configuration.InvSortConfig.Enabled;
         // if (ImGui.Checkbox("Automatically sort inventory", ref sortEnabled))
         // {

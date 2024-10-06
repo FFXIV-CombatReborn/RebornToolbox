@@ -1,6 +1,7 @@
 ﻿using Dalamud.Configuration;
 using ECommons.DalamudServices;
 using Newtonsoft.Json;
+using RebornToolbox.Features.ChocoboRacing;
 using RebornToolbox.Features.InvSort;
 using RebornToolbox.Features.MBShoppingList;
 
@@ -13,6 +14,7 @@ public class Configuration : IPluginConfiguration
     public bool ExpertMode { get; set; } = false;
     public MBShoppingList_Config ShoppingListConfig { get; set; } = new MBShoppingList_Config();
     public InvSort_Config InvSortConfig { get; set; } = new InvSort_Config();
+    public ChocoboRacing_Config ChocoboRacingConfig { get; set; } = new ChocoboRacing_Config();
 
     public static string ConfigPath => Svc.PluginInterface.ConfigFile.FullName;
 
