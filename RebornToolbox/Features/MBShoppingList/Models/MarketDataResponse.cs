@@ -6,6 +6,7 @@ namespace RebornToolbox.Features.MBShoppingList.Models;
   using System.Diagnostics.CodeAnalysis;
   using System.Text.Json.Serialization;
 
+  /// Credit: https://github.com/Caraxi/MarketBoardPlugin/blob/develop/MarketBoardPlugin/Models/Universalis/MarketDataResponse.cs
   /// <summary>
   /// A model representing a market data response from Universalis.
   /// </summary>

@@ -4,6 +4,7 @@ using System.Text.Json.Serialization;
 
 namespace RebornToolbox.Features.MBShoppingList.Models;
 
+/// https://github.com/Caraxi/MarketBoardPlugin/blob/develop/MarketBoardPlugin/Models/Universalis/MarketDataListing.cs
 /// <summary>
 /// A model representing a market data listing from Universalis.
 /// </summary>

@@ -2,6 +2,7 @@
 
 namespace RebornToolbox.Features.MBShoppingList.Models;
 
+/// Credit: https://github.com/Caraxi/MarketBoardPlugin/blob/develop/MarketBoardPlugin/Models/Universalis/MarketDataRecentHistory.cs
 /// <summary>
 /// A model representing a market data recent history from Universalis.
 /// </summary>
