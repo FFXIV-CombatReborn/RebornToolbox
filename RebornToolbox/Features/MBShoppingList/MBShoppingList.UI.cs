@@ -6,6 +6,7 @@ using Dalamud.Interface.Style;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
+using ECommons;
 using ECommons.Automation;
 using ECommons.DalamudServices;
 using ECommons.ExcelServices;
@@ -16,7 +17,9 @@ using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Info;
 using ImGuiNET;
 using Lumina.Excel.GeneratedSheets;
+using OtterGui;
 using RebornToolbox.Features.MBShoppingList.Models;
+using RebornToolbox.IPC;
 
 namespace RebornToolbox.Features.MBShoppingList;
 
@@ -24,11 +27,13 @@ public class MBShoppingList_UI : Window
 {
     private MBShoppingList _manager;
     private FileDialogManager _fileDialogManager;
+    private MBShoppingList_UI_Selector _selector;
 
     public MBShoppingList_UI(MBShoppingList manager) : base("Supermarket Sweep", ImGuiWindowFlags.None, false)
     {
         _manager = manager;
         _fileDialogManager = new FileDialogManager();
+        _selector = new MBShoppingList_UI_Selector(_manager);
     }
 
     public override void Draw()
@@ -39,6 +44,7 @@ public class MBShoppingList_UI : Window
         {
             SelectFile();
         }
+
         RenderRegionTypeComboBox();
         var maxResults = Plugin.Configuration.ShoppingListConfig.MaxResults;
         if (ImGui.InputInt("Max Search Results", ref maxResults))
@@ -46,99 +52,147 @@ public class MBShoppingList_UI : Window
             Plugin.Configuration.ShoppingListConfig.MaxResults = maxResults;
             Plugin.Configuration.SaveConfig();
         }
-        if (ImGui.Button("Refresh Search Results"))
+
+        if (Plugin.Configuration.ExpertMode)
         {
-            foreach (var item in _manager.WantedItems)
+            if (ImGuiUtil.DrawDisabledButton("Refresh All Market Data", new Vector2(0, 0),
+                    "Refresh all Market Data for all items in the list\n(Can only be run every 30 seconds)\nWARNING: This will cause the Universalis servers to suffer!",
+                    DateTime.Now < _lastMassRefresh + TimeSpan.FromSeconds(30)))
             {
-                item.ClearDataResponse();
-                Task.Run(item.GetMarketDataResponseAsync);
-            }
-        }
-        ImGui.Spacing();
-        ImGui.Spacing();
-        ImGui.Separator();
-        foreach (var item in _manager.WantedItems)
-        {
-            DrawWantedItem(item);
-        }
-
-        if (_itemsToRemove.Any())
-        {
-            foreach (var item in _itemsToRemove)
-            {
-                _manager.WantedItems.Remove(item);
-            }
-            _itemsToRemove.Clear();
-        }
-        _fileDialogManager.Draw();
-    }
-
-    private List<ShoppingListItem> _itemsToRemove = new();
-
-    private void DrawWantedItem(ShoppingListItem item)
-    {
-        var extraText = item.InventoryCount >= item.Quantity ? "(Completed)" : string.Empty;
-        if (ImGui.CollapsingHeader($"{item.Name} {extraText}"))
-        {
-            var quantity = item.Quantity;
-            if (ImGui.InputInt("Needed Quantity", ref quantity))
-            {
-                item.Quantity = quantity;
-                _manager.SaveList();
-            }
-
-            var color = item.InventoryCount >= item.Quantity ? ImGuiColors.HealerGreen : ImGuiColors.DalamudWhite;
-            ImGui.TextColored(color, $"Amount in Inventory: {item.InventoryCount}");
-
-            if (ImGui.Button($"Remove Item##{item.ItemId}") && (ImGui.IsKeyDown(ImGuiKey.LeftCtrl) || ImGui.IsKeyDown(ImGuiKey.RightCtrl)))
-            {
-                _itemsToRemove.Add(item);
-            }
-            ImGuiEx.Tooltip("Hold CTRL while clicking to remove item from list");
-
-            DrawItemSearch(item);
-
-            if (item.MarketDataResponse == null)
-            {
-                if (ImGui.Button("Pull Market Data"))
+                _lastMassRefresh = DateTime.Now;
+                var insult = GetRandomInsult();
+                Svc.Chat.Print($"[Reborn Toolbox] {insult}");
+                foreach (var item in _manager.WantedItems)
                 {
+                    item.ClearDataResponse();
                     Task.Run(item.GetMarketDataResponseAsync);
                 }
             }
+        }
+
+        ImGui.Spacing();
+        ImGui.Spacing();
+        ImGui.Separator();
+
+        _selector.Draw(200);
+        ImGui.SameLine();
+        DrawWantedItem(_selector.Current);
+
+        _fileDialogManager.Draw();
+    }
+
+    private DateTime _lastMassRefresh = DateTime.MinValue;
+
+    private void DrawWantedItem(ShoppingListItem? item)
+    {
+        ImGui.BeginChild("Wanted Item");
+        if (item is null)
+        {
+            ImGui.Text("No item selected");
+            ImGui.EndChild();
+            return;
+        }
+
+        int quantity = item.Quantity;
+        ImGui.PushItemWidth(100);
+        if (ImGui.InputInt("Needed Quantity", ref quantity))
+        {
+            item.Quantity = quantity;
+            _manager.SaveList();
+        }
+
+        ImGui.PopItemWidth();
+
+        ImGui.Text($"Amount in Inventory: {item.InventoryCount}");
+
+        string buttonLabel;
+        string buttonDescription;
+        bool buttonDisabled;
+
+        if (item.IsMarketable)
+        {
+            DrawItemSearch(item);
+            if (item.IsFetchingData)
+            {
+                buttonLabel = $"Fetching data...";
+                buttonDescription = $"Currently fetching data from Universalis. Retries: {item.Retries}";
+                buttonDisabled = true;
+            }
+            else if (item.MarketDataResponse == null)
+            {
+                buttonLabel = "Pull Market Data";
+                buttonDescription = $"Pull Market Data from Universalis.";
+                buttonDisabled = false;
+            }
             else
             {
-                ImGui.Separator();
+                buttonLabel = "Refresh Market Data";
+                buttonDescription = $"Refresh Market Data from Universalis.";
+                buttonDisabled = false;
+            }
 
-                foreach (var world in item.WorldListings)
-                {
-                    if (ImGui.Button($"{world.WorldName}"))
-                    {
-                        _manager.Chat.ExecuteCommand($"/li {world.WorldName}");
-                    }
-                    ImGuiEx.Tooltip("Travel using LifeStream");
-                    ImGui.Text($"Number of Listings: {world.Count}");
-                    ImGui.Text($"Lowest Price: {world.LowestPrice}");
-                    ImGui.Separator();
-                }
+            if (OtterGui.ImGuiUtil.DrawDisabledButton(buttonLabel, new Vector2(0, 0), buttonDescription,
+                    buttonDisabled))
+            {
+                if (item.MarketDataResponse != null)
+                    item.ClearDataResponse();
+
+                Task.Run(item.GetMarketDataResponseAsync);
             }
         }
+        else
+        {
+            ImGui.Text("This item cannot be purchased on the Market Board");
+        }
+
+        // If data is present, display it
+        if (item.MarketDataResponse != null && !item.IsFetchingData)
+        {
+            OtterGui.ImGuiTable.DrawTable<ShoppingListItem.WorldListing>(
+                $"Market Availability##{item.ItemId}",
+                item.WorldListings,
+                DrawRow,
+                ImGuiTableFlags.Borders | ImGuiTableFlags.Sortable,
+                "World",
+                "Lowest Price",
+                "Total Listings");
+        }
+
+        ImGui.EndChild();
+    }
+
+    private void DrawRow(ShoppingListItem.WorldListing obj)
+    {
+        ImGui.TableSetColumnIndex(0);
+        if (ImGui.Selectable($"{obj.WorldName}"))
+        {
+            if (!Lifestream_IPCSubscriber.IsEnabled)
+            {
+                Svc.Chat.PrintError($"[Reborn Toolbox] LifeStream is required to move between servers");
+                return;
+            }
+            _manager.TaskManager.Enqueue(() => Lifestream_IPCSubscriber.ExecuteCommand(obj.WorldName), _manager.LifeStreamTaskConfig);
+            _manager.TaskManager.Enqueue(() => !Lifestream_IPCSubscriber.IsBusy(), _manager.LifeStreamTaskConfig);
+            _manager.TaskManager.Enqueue(GenericHelpers.IsScreenReady);
+            _manager.TaskManager.Enqueue(_manager.QueueMoveToMarketboardTasks);
+        }
+
+        ImGuiEx.Tooltip("Travel using LifeStream");
+        ImGui.TableSetColumnIndex(1);
+        ImGui.Text($"{obj.LowestPrice}");
+        ImGui.TableSetColumnIndex(2);
+        ImGui.Text($"{obj.Count}");
     }
 
     private unsafe void DrawItemSearch(ShoppingListItem item)
     {
         AddonItemSearch* addonItemSearch = (AddonItemSearch*)Svc.GameGui.GetAddonByName("ItemSearch");
-        if (addonItemSearch == null)
+        var disabled = addonItemSearch == null;
+        var description = disabled ? "Automatically search for this item on the Marketboard (MarketBoard window must be open)" : "Automatically search for this item on the Marketboard";
+        if (ImGuiUtil.DrawDisabledButton($"Search Marketboard for Item##{item.ItemId}", new Vector2(), description, disabled))
         {
-            ImGui.Text("MarketBoard not opened");
-            ImGuiEx.Tooltip("Open the market board window to automatically search for items");
-        }
-        else
-        {
-            if (ImGui.Button($"Search Marketboard for Item##{item.ItemId}"))
-            {
-                addonItemSearch->SearchTextInput->SetText(item.Name);
-                addonItemSearch->RunSearch();
-            }
+            addonItemSearch->SearchTextInput->SetText(item.Name);
+            addonItemSearch->RunSearch();
         }
     }
 
@@ -163,13 +217,15 @@ public class MBShoppingList_UI : Window
 
     private string _searchTerm = string.Empty;
     private Item? _selectedItem;
+
     private void DrawItemAdd()
     {
         ImGui.InputText("##searchBar", ref _searchTerm, 100);
 
         if (!string.IsNullOrEmpty(_searchTerm) && _selectedItem is null)
         {
-            var matchingItems = MBShoppingList.MarketableItems.Where(item => item.Name.ToString().Contains(_searchTerm, StringComparison.OrdinalIgnoreCase));
+            var matchingItems = MBShoppingList.MarketableItems.Where(item =>
+                item.Name.ToString().Contains(_searchTerm, StringComparison.OrdinalIgnoreCase));
 
             if (matchingItems.Any())
             {
@@ -182,6 +238,7 @@ public class MBShoppingList_UI : Window
                         _searchTerm = item.Name.ToString();
                     }
                 }
+
                 ImGui.EndChild();
             }
         }
@@ -194,6 +251,7 @@ public class MBShoppingList_UI : Window
                 Svc.Log.Warning("No item to add to shopping list");
                 return;
             }
+
             var shoppingListItem = new ShoppingListItem(_selectedItem, 1);
             _manager.WantedItems.Add(shoppingListItem);
             _searchTerm = string.Empty;
@@ -211,6 +269,7 @@ public class MBShoppingList_UI : Window
     }
 
     private static readonly string[] RegionNames = ["North America", "Europe", "Japan", "Oceania"];
+
     public void RenderRegionTypeComboBox()
     {
         int currentRegionIndex = (int)Plugin.Configuration.ShoppingListConfig.ShoppingRegion;
@@ -282,6 +341,7 @@ public class MBShoppingList_UI : Window
                     item = MBShoppingList.AllItems.FirstOrDefault(i =>
                         string.Equals(i.Name, $"General-purpose {itemName}", StringComparison.OrdinalIgnoreCase));
                 }
+
                 if (item == null)
                 {
                     Svc.Log.Warning($"Item '{itemName}' does not exist.");
@@ -302,4 +362,47 @@ public class MBShoppingList_UI : Window
             }
         }
     }
+
+    private static readonly Random RandomGenerator = new Random();
+
+    private static string GetRandomInsult()
+    {
+        int index = RandomGenerator.Next(Insults.Count); // Random index from 0 to the length of the insult list
+        return Insults[index];
+    }
+
+    private static readonly List<string> Insults = new List<string>
+    {
+        "Way to hammer the API like a clueless fuckstick. Hope you’re proud of yourself, dipshit.",
+        "Congrats, you API-throttling asshole. Keep this shit up, and the server’s going to crash just for you.",
+        "Nice job, you fucking data parasite. The server’s definitely enjoying your selfish bullshit.",
+        "Look at you, a total bandwidth-sucking dickhead. I bet you feel real clever, huh?",
+        "Bravo, douche-canoe. Because what the API really needed was another inconsiderate prick like you.",
+        "Great going, API-slammer. Do us all a favor and learn some patience, you trigger-happy bastard.",
+        "Wow, look at you hammering the server like a complete shit-for-brains. Slow the fuck down, maybe?",
+        "Fucking excellent, now the API has another selfish prick to deal with. You must be so proud.",
+        "Good job, you inconsiderate dicknugget. Maybe let the API breathe for a fucking second?",
+        "Oh fantastic, a throttling fucknugget with zero impulse control. The API’s really going to love you.",
+        "Way to go, you goddamn server-hammering toolbag. Keep clicking, maybe it'll just crash for you.",
+        "Holy shit, do you even know what patience is, or are you just this much of an API-smashing douche?",
+        "Good one, you dumbfuck. Slamming the API like that really shows how little you care about anyone else.",
+        "Look at this fucking guy, treating the API like a punching bag. Get a grip, you reckless bastard.",
+        "Nice going, throttle-happy fuckwit. It's like you're trying to kill the server on purpose.",
+        "Well done, dickhead. Your API abuse is exactly what the server didn’t need right now.",
+        "You really are an inconsiderate shithead, aren't you? The API’s going to fucking love you for this.",
+        "Way to spam the API like a goddamn moron. Maybe give the server a break, shitheel?",
+        "Fucking phenomenal, you're the reason rate limits exist, you API-hammering asshole.",
+        "Jesus Christ, slow the fuck down, you refresh-spamming fuckstick. The API isn't your personal bitch.",
+        "Impressive, you data-hungry douchebag. Do you ever stop to think, or do you just slam buttons like an idiot?",
+        "Wow, really hammering that API, huh? What are you, some kind of bandwidth-sucking shit-for-brains?",
+        "Goddamn it, give the API a fucking rest, you self-centered prick.",
+        "Fucking perfect. Another clueless dipshit who doesn’t give a fuck about anyone else’s server performance.",
+        "Congrats, you’re officially the API’s worst fucking nightmare. Well done, you inconsiderate fuck.",
+        "You’ve got to be shitting me. Could you throttle the API any harder, you absolute bastard?",
+        "Holy shit, maybe ease up on the server abuse, you API-slamming fucker.",
+        "Good job, douche-nozzle. Your ability to hammer the API is only matched by your complete lack of awareness.",
+        "Look at you, all trigger-happy and API-abusing. Are you really this much of a selfish bastard?",
+        "Fantastic. Another brain-dead fuckwit pounding the API like it owes them something.",
+        "You refresh-spamming assclown. Keep this up, and maybe the server will just explode for you."
+    };
 }

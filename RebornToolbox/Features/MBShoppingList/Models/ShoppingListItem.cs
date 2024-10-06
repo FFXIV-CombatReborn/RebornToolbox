@@ -1,4 +1,5 @@
-﻿using ECommons.DalamudServices;
+﻿using System.Runtime.Serialization;
+using ECommons.DalamudServices;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using Lumina.Excel.GeneratedSheets;
 using Newtonsoft.Json;
@@ -7,25 +8,44 @@ namespace RebornToolbox.Features.MBShoppingList.Models;
 
 public class ShoppingListItem
 {
+    [Newtonsoft.Json.JsonIgnore]
+    private Item _itemRecord;
+
     public ShoppingListItem(Item item, int quantity)
     {
         ItemId = item.RowId;
         Quantity = quantity;
-        Task.Run(GetMarketDataResponseAsync);
+        _itemRecord = item; // Cache the item here
+        IsMarketable = MBShoppingList.MarketableItems.Contains(ItemRecord);
     }
 
-    public ShoppingListItem()
+    public ShoppingListItem() {}
+
+    [OnDeserialized]
+    internal void OnDeserializedMethod(StreamingContext context)
     {
-        Task.Run(GetMarketDataResponseAsync);
+        // Initialize _itemRecord after deserialization
+        _itemRecord = MBShoppingList.AllItems.FirstOrDefault(x => x.RowId == ItemId);
+        if (_itemRecord == null)
+        {
+            // Handle the case where the item is not found
+            Svc.Log.Error($"Item with ID {ItemId} not found in AllItems.");
+        }
+        else
+        {
+            IsMarketable = MBShoppingList.MarketableItems.Contains(_itemRecord);
+        }
     }
-
-    public ulong ItemId;
 
     [Newtonsoft.Json.JsonIgnore]
-    public Item ItemRecord => MBShoppingList.AllItems.First(x => x.RowId == ItemId);
+    public Item ItemRecord => _itemRecord;
 
-    public bool IsMarketable => MBShoppingList.MarketableItems.Contains(ItemRecord);
-    public string Name => ItemRecord.Name;
+    [Newtonsoft.Json.JsonIgnore]
+    public string Name => _itemRecord.Name;
+
+    public uint ItemId { get; set; }
+
+    public bool IsMarketable { get; private set; }
     public int Quantity { get; set; }
 
     [Newtonsoft.Json.JsonIgnore]
@@ -73,8 +93,39 @@ public class ShoppingListItem
     public MarketDataListing? BestMarketListing => MarketDataResponse?.Listings.OrderBy(l => l.Total).FirstOrDefault();
     [Newtonsoft.Json.JsonIgnore]
     public MarketDataResponse? MarketDataResponse { get; private set; }
+
+    [JsonIgnore]
+    private Task? _marketDataTask;
+
+    [JsonIgnore]
+    private int _retries;
+
+    [JsonIgnore]
+    private bool _isFetchingData;
+
     [Newtonsoft.Json.JsonIgnore]
-    private int _retries = 0;
+    public bool IsFetchingData
+    {
+        get
+        {
+            lock (this)
+            {
+                return _isFetchingData;
+            }
+        }
+    }
+
+    [Newtonsoft.Json.JsonIgnore]
+    public int Retries
+    {
+        get
+        {
+            lock (this)
+            {
+                return _retries;
+            }
+        }
+    }
 
     public List<WorldListing> WorldListings { get; private set; } = [];
 
@@ -94,6 +145,28 @@ public class ShoppingListItem
     {
         if (!IsMarketable)
             return;
+
+        Task existingTask;
+        lock (this)
+        {
+            if (_marketDataTask != null && !_marketDataTask.IsCompleted)
+            {
+                existingTask = _marketDataTask;
+            }
+            else
+            {
+                _isFetchingData = true;
+                _retries = 0;
+                _marketDataTask = FetchMarketDataAsync();
+                existingTask = _marketDataTask;
+            }
+        }
+
+        await existingTask;
+    }
+
+    private async Task FetchMarketDataAsync()
+    {
         while (_retries < 5 && MarketDataResponse == null)
         {
             Svc.Log.Debug($"GetMarketDataResponseAsync for item {Name}");
@@ -120,17 +193,31 @@ public class ShoppingListItem
                         })
                         .OrderBy(l => l.LowestPrice)
                         .ToList();
+                    break; // Fetch successful
                 }
                 else
                 {
-                    Svc.Log.Warning($"Unable to get market data response from universalis: {responseString}");
+                    Svc.Log.Warning($"Unable to get market data response from Universalis: {responseString}");
+                    lock (this)
+                    {
+                        _retries++;
+                    }
+                    await Task.Delay(2000);
                 }
             }
             catch
             {
-                _retries++;
-                System.Threading.Thread.Sleep(2000);
+                lock (this)
+                {
+                    _retries++;
+                }
+                await Task.Delay(2000);
             }
         }
+        lock (this)
+        {
+            _isFetchingData = false;
+        }
     }
+
 }

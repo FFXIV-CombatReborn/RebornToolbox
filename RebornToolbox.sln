@@ -4,6 +4,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RebornToolbox", "RebornTool
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ECommons", "ECommons\ECommons\ECommons.csproj", "{CC6D7364-B212-45A4-834B-B4E03C0AFE93}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OtterGui", "OtterGui\OtterGui.csproj", "{F85F3692-BEA8-404A-8541-2C46B07CFD5E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -18,5 +20,9 @@ Global
 		{CC6D7364-B212-45A4-834B-B4E03C0AFE93}.Debug|Any CPU.Build.0 = Debug|x64
 		{CC6D7364-B212-45A4-834B-B4E03C0AFE93}.Release|Any CPU.ActiveCfg = Release|x64
 		{CC6D7364-B212-45A4-834B-B4E03C0AFE93}.Release|Any CPU.Build.0 = Release|x64
+		{F85F3692-BEA8-404A-8541-2C46B07CFD5E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F85F3692-BEA8-404A-8541-2C46B07CFD5E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F85F3692-BEA8-404A-8541-2C46B07CFD5E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F85F3692-BEA8-404A-8541-2C46B07CFD5E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

@@ -2,9 +2,11 @@
 using Dalamud.Interface.Windowing;
 using Dalamud.Plugin;
 using ECommons;
+using ECommons.Automation.NeoTaskManager;
 using ECommons.Commands;
 using ECommons.DalamudServices;
 using RebornToolbox.Common;
+using RebornToolbox.Features.InvSort;
 using RebornToolbox.Features.MBShoppingList;
 
 namespace RebornToolbox;
@@ -13,6 +15,7 @@ public class Plugin : IDalamudPlugin
 {
     public static Configuration Configuration { get; set; }
     public MBShoppingList MBShoppingList;
+    //public InvSort InventorySort;
 
     public WindowSystem WindowSystem;
     public MainWindow MainWindow;
@@ -20,9 +23,10 @@ public class Plugin : IDalamudPlugin
 
     public Plugin(IDalamudPluginInterface plugin)
     {
-        ECommonsMain.Init(plugin, this);
+        ECommonsMain.Init(plugin, this, Module.DalamudReflector);
         Configuration = Configuration.LoadConfig();
         MBShoppingList = new MBShoppingList();
+        //InventorySort = new InvSort();
 
         WindowSystem = new WindowSystem("RebornToolbox");
         MainWindow = new MainWindow(this);
@@ -57,6 +61,12 @@ public class Plugin : IDalamudPlugin
         if (string.Equals(arguments, "shop"))
         {
             ToggleSweepWindow();
+        }
+        else if (string.Equals(arguments, "expert"))
+        {
+            Plugin.Configuration.ExpertMode = !Plugin.Configuration.ExpertMode;
+            Svc.Chat.Print($"[Reborn Toolbox] ExpertMode: {Plugin.Configuration.ExpertMode}");
+            Plugin.Configuration.SaveConfig();
         }
         else
         {

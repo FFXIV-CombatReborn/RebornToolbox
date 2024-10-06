@@ -49,6 +49,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\ECommons\ECommons\ECommons.csproj" />
+      <ProjectReference Include="..\OtterGui\OtterGui.csproj" />
     </ItemGroup>
 
 </Project>
