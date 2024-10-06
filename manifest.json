@@ -1,0 +1,20 @@
+﻿{
+  "Author": "The Combat Reborn Team",
+  "Name": "Reborn Toolbox",
+  "InternalName": "RebornToolbox",
+  "Description": "Various tweaks and features provided by the Combat Reborn team that don't need their own plugin",
+  "ApplicableVersion": "any",
+  "Tags": [
+    "Toolbox",
+    "Reborn"
+  ],
+  "DalamudApiLevel": 10,
+  "LoadRequiredState": 0,
+  "LoadSync": false,
+  "CanUnloadAsync": false,
+  "LoadPriority": 0,
+  "IsTestingExclusive": false,
+  "IconUrl": "https://raw.githubusercontent.com/FFXIV-CombatReborn/RebornAssets/blob/main/IconAssets/BPR_Icon.png",
+  "Punchline": "Let that sink in!",
+  "AcceptsFeedback": true
+}
