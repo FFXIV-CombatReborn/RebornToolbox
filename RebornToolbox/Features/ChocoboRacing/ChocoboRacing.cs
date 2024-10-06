@@ -54,102 +54,102 @@ public class ChocoboRacing
         {
             var manager = RaceChocoboManager.Instance();
             if (manager == null) return 0;
-            return manager->Rank;
+            var rank = manager->Rank;
+            return rank;
         }
     }
 
-private unsafe void OnUpdate(IFramework framework)
-{
-    if (!Plugin.Configuration.ChocoboRacingConfig.Enabled)
+    private unsafe void OnUpdate(IFramework framework)
     {
-        if (IsRunning)
-            IsRunning = false;
-        return;
-    }
+        if (!Plugin.Configuration.ChocoboRacingConfig.Enabled)
+        {
+            if (IsRunning)
+                IsRunning = false;
+            return;
+        }
 
-    if (!IsRunning || !GenericHelpers.IsScreenReady()) return;
-    if (Plugin.Configuration.ChocoboRacingConfig.StopAtMaxRank && ChocoboLevel == 40)
-    {
+        if (!IsRunning || !GenericHelpers.IsScreenReady()) return;
+        if (Plugin.Configuration.ChocoboRacingConfig.StopAtMaxRank && ChocoboLevel == 40)
+        {
+            if (IsMoving)
+                IsMoving = false;
+            IsRunning = false;
+            return;
+        }
+
+        if (Plugin.Configuration.ChocoboRacingConfig.AutoRun && Svc.Condition[ConditionFlag.ChocoboRacing] &&
+            GenericHelpers.TryGetAddonByName("_RaceChocoboParameter", out AtkUnitBase* raceChocoboParameter))
+        {
+            Svc.Log.Verbose("Zoom zoom....");
+            var lathered = raceChocoboParameter->GetImageNodeById(3)->IsVisible();
+            var stamina = raceChocoboParameter->GetNodeById(5)->GetAsAtkCounterNode()->NodeText.ToString();
+            var hasStamina = !string.Equals(stamina, "0.00%");
+            if (!lathered && hasStamina && !Plugin.Configuration.ChocoboRacingConfig.AlwaysRun)
+                IsMoving = true;
+            else if (Plugin.Configuration.ChocoboRacingConfig.AlwaysRun)
+                IsMoving = true;
+            else
+                IsMoving = false;
+            return;
+        }
+
         if (IsMoving)
             IsMoving = false;
-        IsRunning = false;
-        return;
-    }
-
-    if (Plugin.Configuration.ChocoboRacingConfig.AutoRun && Svc.Condition[ConditionFlag.ChocoboRacing] &&
-        GenericHelpers.TryGetAddonByName("_RaceChocoboParameter", out AtkUnitBase* raceChocoboParameter))
-    {
-        Svc.Log.Verbose("Zoom zoom....");
-        var lathered = raceChocoboParameter->GetImageNodeById(3)->IsVisible();
-        var stamina = raceChocoboParameter->GetNodeById(5)->GetAsAtkCounterNode()->NodeText.ToString();
-        var hasStamina = !string.Equals(stamina, "0.00%");
-        if (!lathered && hasStamina && !Plugin.Configuration.ChocoboRacingConfig.AlwaysRun)
-            IsMoving = true;
-        else if (Plugin.Configuration.ChocoboRacingConfig.AlwaysRun)
-            IsMoving = true;
-        else
-            IsMoving = false;
-        return;
-    }
-
-    if (IsMoving)
-        IsMoving = false;
-    if (EzThrottler.Throttle("FeatherToTheMetal", 1500))
-    {
-        if (Svc.Condition[ConditionFlag.BoundToDuty97])
+        if (EzThrottler.Throttle("FeatherToTheMetal", 1500))
         {
-            ContentsFinderConfirm();
-            return;
-        }
+            if (Svc.Condition[ConditionFlag.BoundToDuty97])
+            {
+                ContentsFinderConfirm();
+                return;
+            }
 
-        var cfAgent = AgentContentsFinder.Instance();
-        if (!GenericHelpers.TryGetAddonByName("ContentsFinder", out AddonContentsFinder* addon))
-        {
-            cfAgent->OpenRouletteDuty(21);
-            return;
-        }
+            var cfAgent = AgentContentsFinder.Instance();
+            if (!GenericHelpers.TryGetAddonByName("ContentsFinder", out AddonContentsFinder* addon))
+            {
+                cfAgent->OpenRouletteDuty(21);
+                return;
+            }
 
-        var selectedContent = cfAgent->SelectedContent;
-        if (!selectedContent.Any(c => c.Id == 21 && c.ContentType == ContentsId.ContentsType.Roulette))
-        {
-            SelectDuty(addon);
-            return;
-        }
+            var selectedContent = cfAgent->SelectedContent;
+            if (!selectedContent.Any(c => c.Id == 21 && c.ContentType == ContentsId.ContentsType.Roulette))
+            {
+                SelectDuty(addon);
+                return;
+            }
 
-        var selectedDutyName = addon->AtkValues[18].GetValueAsString();
-        if (string.Equals(selectedDutyName, "Chocobo Race: Random", StringComparison.OrdinalIgnoreCase))
-        {
-            Callback.Fire((AtkUnitBase*)addon, true, 12, 0);
+            var selectedDutyName = addon->AtkValues[18].GetValueAsString();
+            if (string.Equals(selectedDutyName, "Chocobo Race: Random", StringComparison.OrdinalIgnoreCase))
+            {
+                Callback.Fire((AtkUnitBase*)addon, true, 12, 0);
+            }
         }
     }
-}
 
 // Credit: https://github.com/ffxivcode/AutoDuty/blob/26a61eefdba148bc5f46694f915f402315e9f128/AutoDuty/Helpers/QueueHelper.cs#L247
-private uint HeadersCount(uint before, List<AtkComponentTreeListItem> list)
-{
-    uint count = 0;
-    for (int i = 0; i < before; i++)
+    private uint HeadersCount(uint before, List<AtkComponentTreeListItem> list)
     {
-        if (list[i].UIntValues[0] == 4 || list[i].UIntValues[0] == 2)
-            count++;
+        uint count = 0;
+        for (int i = 0; i < before; i++)
+        {
+            if (list[i].UIntValues[0] == 4 || list[i].UIntValues[0] == 2)
+                count++;
+        }
+
+        return count;
     }
 
-    return count;
-}
-
 // Credit: https://github.com/ffxivcode/AutoDuty/blob/26a61eefdba148bc5f46694f915f402315e9f128/AutoDuty/Helpers/QueueHelper.cs#L258
-private unsafe void SelectDuty(AddonContentsFinder* addonContentsFinder)
-{
-    if (addonContentsFinder == null) return;
+    private unsafe void SelectDuty(AddonContentsFinder* addonContentsFinder)
+    {
+        if (addonContentsFinder == null) return;
 
-    var vectorDutyListItems = addonContentsFinder->DutyList->Items;
-    List<AtkComponentTreeListItem> listAtkComponentTreeListItems = [];
-    vectorDutyListItems.ForEach(pointAtkComponentTreeListItem =>
-        listAtkComponentTreeListItems.Add(*(pointAtkComponentTreeListItem.Value)));
+        var vectorDutyListItems = addonContentsFinder->DutyList->Items;
+        List<AtkComponentTreeListItem> listAtkComponentTreeListItems = [];
+        vectorDutyListItems.ForEach(pointAtkComponentTreeListItem =>
+            listAtkComponentTreeListItems.Add(*(pointAtkComponentTreeListItem.Value)));
 
-    Callback.Fire((AtkUnitBase*)addonContentsFinder, true, 3,
-        addonContentsFinder->SelectedRow -
-        (HeadersCount(addonContentsFinder->SelectedRow, listAtkComponentTreeListItems) - 1));
-}
-
+        Callback.Fire((AtkUnitBase*)addonContentsFinder, true, 3,
+            addonContentsFinder->SelectedRow -
+            (HeadersCount(addonContentsFinder->SelectedRow, listAtkComponentTreeListItems) - 1));
+    }
 }

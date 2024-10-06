@@ -93,7 +93,7 @@ public class MainWindow : Window
             }
 
             var stopAtMaxRank = Plugin.Configuration.ChocoboRacingConfig.StopAtMaxRank;
-            if (ImGui.Checkbox("Stop at Max Rank", ref stopAtMaxRank))
+            if (ImGui.Checkbox("Stop at Rank 40", ref stopAtMaxRank))
             {
                 Plugin.Configuration.ChocoboRacingConfig.StopAtMaxRank = stopAtMaxRank;
                 Plugin.Configuration.SaveConfig();
