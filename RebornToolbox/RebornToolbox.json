@@ -1,0 +1,20 @@
+﻿{
+  "Author": "The Combat Reborn Team",
+  "Name": "Reborn Toolbox",
+  "InternalName": "RebornToolbix",
+  "Description": "Lorem Ipsum Dolem",
+  "ApplicableVersion": "any",
+  "Tags": [
+    "Toolbox",
+    "Reborn"
+  ],
+  "DalamudApiLevel": 10,
+  "LoadRequiredState": 0,
+  "LoadSync": false,
+  "CanUnloadAsync": false,
+  "LoadPriority": 0,
+  "IsTestingExclusive": false,
+  "IconUrl": "https://raw.githubusercontent.com/FFXIV-CombatReborn/RebornAssets/blob/main/IconAssets/RBT_Icon.png",
+  "Punchline": "Do it honk?",
+  "AcceptsFeedback": true
+}
