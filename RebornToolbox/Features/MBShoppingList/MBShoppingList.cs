@@ -1,13 +1,16 @@
 ﻿using System.Numerics;
 using Dalamud.Game.ClientState.Objects.Types;
+using Dalamud.Game.Inventory;
 using Dalamud.Game.Inventory.InventoryEventArgTypes;
 using Dalamud.Interface.Windowing;
+using Dalamud.Plugin.Ipc;
 using ECommons;
 using ECommons.Automation;
 using ECommons.Automation.NeoTaskManager;
 using ECommons.Commands;
 using ECommons.DalamudServices;
 using ECommons.GameHelpers;
+using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using Lumina.Excel.GeneratedSheets;
 using Newtonsoft.Json;
@@ -49,22 +52,31 @@ public class MBShoppingList
 
         TaskManager = new TaskManager(DefaultTaskConfig);
         LoadList();
-        Svc.GameInventory.InventoryChanged += OnInventoryChanged;
+        _OnItemAdded =
+            Svc.PluginInterface.GetIpcSubscriber<(uint, InventoryItem.ItemFlags, ulong, uint), bool>(
+                "AllaganTools.ItemAdded");
+        _OnItemRemoved =
+            Svc.PluginInterface.GetIpcSubscriber<(uint, InventoryItem.ItemFlags, ulong, uint), bool>(
+                "AllaganTools.ItemRemoved");
+
+        _OnItemAdded.Subscribe(OnItemAdded);
     }
 
-    private void OnInventoryChanged(IReadOnlyCollection<InventoryEventArgs> events)
+    private static ICallGateSubscriber<(uint, InventoryItem.ItemFlags, ulong, uint), bool>? _OnItemAdded;
+    private static ICallGateSubscriber<(uint, InventoryItem.ItemFlags, ulong, uint), bool>? _OnItemRemoved;
+
+    private void OnItemAdded((uint, InventoryItem.ItemFlags, ulong, uint) itemDetails)
     {
-        if (!Plugin.Configuration.ShoppingListConfig.RemoveQuantityAutomatically || !Plugin.Configuration.ShoppingListConfig.Enabled)
+        if (!Plugin.Configuration.ShoppingListConfig.RemoveQuantityAutomatically ||
+            !Plugin.Configuration.ShoppingListConfig.Enabled)
             return;
-        foreach (var eventItem in events)
-        {
-            var wantedItem = WantedItems.FirstOrDefault(i => i.ItemId == eventItem.Item.ItemId);
-            if (wantedItem == null)
-                continue;
+        var wantedItem = WantedItems.FirstOrDefault(i => i.ItemId == itemDetails.Item1);
+        if (wantedItem is null)
+            return;
 
-            wantedItem.Quantity =- wantedItem.InventoryCount;
-        }
+        wantedItem.Quantity -= itemDetails.Item4;
     }
+
 
     public void SaveList()
     {
@@ -98,6 +110,7 @@ public class MBShoppingList
             Svc.Chat.PrintError($"[Reborn Toolbox] VNavmesh is required for automatic movement");
             return;
         }
+
         switch (Svc.ClientState.TerritoryType)
         {
             case 129:
@@ -122,7 +135,8 @@ public class MBShoppingList
         TaskManager.Enqueue(() => VNavmesh_IPCSubscriber.Nav_IsReady());
         TaskManager.Enqueue(() => VNavmesh_IPCSubscriber.SimpleMove_PathfindAndMoveTo(uldahTransitionPosition, false));
         TaskManager.EnqueueDelay(5000);
-        TaskManager.Enqueue(() => !VNavmesh_IPCSubscriber.Path_IsRunning() && !VNavmesh_IPCSubscriber.Nav_PathfindInProgress());
+        TaskManager.Enqueue(() =>
+            !VNavmesh_IPCSubscriber.Path_IsRunning() && !VNavmesh_IPCSubscriber.Nav_PathfindInProgress());
         TaskManager.Enqueue(GenericHelpers.IsScreenReady);
         TaskManager.Enqueue(() => VNavmesh_IPCSubscriber.Nav_IsReady());
         TaskManager.Enqueue(MoveToNearestMarketboard);
@@ -132,15 +146,20 @@ public class MBShoppingList
 
     private Vector3 oldGridTransitionPosition = new Vector3(11.458f, 1.275f, -15.702f);
     private Vector3 oldGridBowerHousePosition = new Vector3(141.558f, 13.571f, -97.028f);
+
     private void QueueGridMoveToMarketboardTasks()
     {
         TaskManager.Enqueue(() => VNavmesh_IPCSubscriber.Nav_IsReady());
-        TaskManager.Enqueue(() => VNavmesh_IPCSubscriber.SimpleMove_PathfindAndMoveTo(oldGridTransitionPosition, false));
-        TaskManager.Enqueue(() => !VNavmesh_IPCSubscriber.Path_IsRunning() && !VNavmesh_IPCSubscriber.Nav_PathfindInProgress());
+        TaskManager.Enqueue(() =>
+            VNavmesh_IPCSubscriber.SimpleMove_PathfindAndMoveTo(oldGridTransitionPosition, false));
+        TaskManager.Enqueue(() =>
+            !VNavmesh_IPCSubscriber.Path_IsRunning() && !VNavmesh_IPCSubscriber.Nav_PathfindInProgress());
         TaskManager.Enqueue(GenericHelpers.IsScreenReady);
         TaskManager.Enqueue(() => VNavmesh_IPCSubscriber.Nav_IsReady());
-        TaskManager.Enqueue(() => VNavmesh_IPCSubscriber.SimpleMove_PathfindAndMoveTo(oldGridBowerHousePosition, false));
-        TaskManager.Enqueue(() => !VNavmesh_IPCSubscriber.Path_IsRunning() && !VNavmesh_IPCSubscriber.Nav_PathfindInProgress());
+        TaskManager.Enqueue(() =>
+            VNavmesh_IPCSubscriber.SimpleMove_PathfindAndMoveTo(oldGridBowerHousePosition, false));
+        TaskManager.Enqueue(() =>
+            !VNavmesh_IPCSubscriber.Path_IsRunning() && !VNavmesh_IPCSubscriber.Nav_PathfindInProgress());
         TaskManager.Enqueue(() => VNavmesh_IPCSubscriber.Path_Stop());
         TaskManager.Enqueue(MoveToNearestMarketboard);
     }
@@ -169,6 +188,7 @@ public class MBShoppingList
         {
             Svc.Log.Error($"TargetSystem was null.");
         }
+
         targetSystem->OpenObjectInteraction(
             (FFXIVClientStructs.FFXIV.Client.Game.Object.GameObject*)obj.Address);
     }
