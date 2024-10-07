@@ -74,6 +74,7 @@ public class ChocoboRacing
             IsMoving = false;
             return;
         }
+
         if (Plugin.Configuration.ChocoboRacingConfig.StopAtMaxRank && ChocoboLevel == 40)
         {
             if (IsMoving)
@@ -111,19 +112,22 @@ public class ChocoboRacing
             var cfAgent = AgentContentsFinder.Instance();
             if (!GenericHelpers.TryGetAddonByName("ContentsFinder", out AddonContentsFinder* addon))
             {
-                cfAgent->OpenRouletteDuty(21);
+                cfAgent->OpenRouletteDuty((byte)Plugin.Configuration.ChocoboRacingConfig.RaceRoute);
+
                 return;
             }
 
             var selectedContent = cfAgent->SelectedContent;
-            if (!selectedContent.Any(c => c.Id == 21 && c.ContentType == ContentsId.ContentsType.Roulette))
+            if (!selectedContent.Any(c =>
+                    c.Id == (byte)Plugin.Configuration.ChocoboRacingConfig.RaceRoute &&
+                    c.ContentType == ContentsId.ContentsType.Roulette))
             {
                 SelectDuty(addon);
                 return;
             }
 
             var selectedDutyName = addon->AtkValues[18].GetValueAsString();
-            if (string.Equals(selectedDutyName, "Chocobo Race: Random", StringComparison.OrdinalIgnoreCase))
+            if (selectedDutyName.Contains(Plugin.Configuration.ChocoboRacingConfig.RaceRoute.ToFriendlyString(), StringComparison.OrdinalIgnoreCase))
             {
                 Callback.Fire((AtkUnitBase*)addon, true, 12, 0);
             }

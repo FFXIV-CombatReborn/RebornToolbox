@@ -1,5 +1,6 @@
 ﻿using Dalamud.Interface.Windowing;
 using ImGuiNET;
+using OtterGui;
 
 namespace RebornToolbox.Features.ChocoboRacing;
 
@@ -17,6 +18,12 @@ public class ChocoboRacing_UI : Window
         if (ImGui.Checkbox("Enable", ref enabled))
         {
             _chocoboRacing.IsRunning = enabled;
+        }
+        var route = Plugin.Configuration.ChocoboRacingConfig.RaceRoute;
+        if (ImGuiUtil.GenericEnumCombo("Race Route", 150, route, out var newRoute, r => r.ToFriendlyString()))
+        {
+            Plugin.Configuration.ChocoboRacingConfig.RaceRoute = newRoute;
+            Plugin.Configuration.SaveConfig();
         }
         ImGui.Text($"Current Rank: {_chocoboRacing.ChocoboLevel}");
         ImGui.Text($"Moving: {_chocoboRacing.IsMoving}");
