@@ -68,7 +68,7 @@ public class MBShoppingList
             {
                 updated = true;
                 Svc.Log.Debug($"Item {item.Name} has moved into inventory.");
-                item.Quantity--;
+                item.Quantity -= (int)e.Item.Quantity;
                 if (item.Quantity < 0)
                     item.Quantity = 0;
             }

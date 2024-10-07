@@ -1,15 +1,16 @@
 ﻿using System.Runtime.Serialization;
+using ECommons;
 using ECommons.DalamudServices;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using Lumina.Excel.GeneratedSheets;
 using Newtonsoft.Json;
+using RebornToolbox.IPC;
 
 namespace RebornToolbox.Features.MBShoppingList.Models;
 
 public class ShoppingListItem
 {
-    [Newtonsoft.Json.JsonIgnore]
-    private Item _itemRecord;
+    [Newtonsoft.Json.JsonIgnore] private Item _itemRecord;
 
     public ShoppingListItem(Item item, int quantity)
     {
@@ -19,7 +20,9 @@ public class ShoppingListItem
         IsMarketable = MBShoppingList.MarketableItems.Contains(ItemRecord);
     }
 
-    public ShoppingListItem() {}
+    public ShoppingListItem()
+    {
+    }
 
     [OnDeserialized]
     internal void OnDeserializedMethod(StreamingContext context)
@@ -37,74 +40,103 @@ public class ShoppingListItem
         }
     }
 
-    [Newtonsoft.Json.JsonIgnore]
-    public Item ItemRecord => _itemRecord;
+    [Newtonsoft.Json.JsonIgnore] public Item ItemRecord => _itemRecord;
 
-    [Newtonsoft.Json.JsonIgnore]
-    public string Name => _itemRecord.Name;
+    [Newtonsoft.Json.JsonIgnore] public string Name => _itemRecord.Name;
 
     public uint ItemId { get; set; }
 
     public bool IsMarketable { get; private set; }
     public int Quantity { get; set; }
 
-    [Newtonsoft.Json.JsonIgnore]
-    public unsafe int InventoryCount
-    {
-        get
-        {
-            int count = 0;
-            var manager = InventoryManager.Instance();
-            if (manager == null)
-                return count;
-            foreach (var inv in InventoryTypes)
-            {
-                var container = manager->GetInventoryContainer(inv);
-                if (container == null || container->Loaded == 0)
-                    continue;
-                for (int i = 0; i < container->Size; i++)
-                {
-                    var item = container->GetInventorySlot(i);
-                    if (item == null || item->ItemId == 0 || item->ItemId != ItemId) continue;
+    public long InventoryCount => AllaganTools_IPCSubscriber.ItemCountOwned(ItemId, false, ValidInventoryTypes.Select(i => (uint)i).ToArray());
 
-                    count++;
-                }
-            }
-
-            return count;
-        }
-    }
     [Newtonsoft.Json.JsonIgnore]
-    private List<InventoryType> InventoryTypes
+    private List<InventoryType> ValidInventoryTypes = new List<InventoryType>()
     {
-        get
-        {
-            List<InventoryType> types = new List<InventoryType>()
-            {
-                InventoryType.Inventory1,
-                InventoryType.Inventory2,
-                InventoryType.Inventory3,
-                InventoryType.Inventory4,
-            };
-            return types;
-        }
+        InventoryType.Crystals,
+        InventoryType.Inventory1,
+        InventoryType.Inventory2,
+        InventoryType.Inventory3,
+        InventoryType.Inventory4,
+        InventoryType.Mail,
+        InventoryType.ArmoryBody,
+        InventoryType.ArmoryEar,
+        InventoryType.ArmoryFeets,
+        InventoryType.ArmoryHands,
+        InventoryType.ArmoryHead,
+        InventoryType.ArmoryLegs,
+        InventoryType.ArmoryNeck,
+        InventoryType.ArmoryRings,
+        InventoryType.ArmoryWaist,
+        InventoryType.ArmoryWrist,
+        InventoryType.ArmoryMainHand,
+        InventoryType.ArmoryOffHand,
+        InventoryType.EquippedItems,
+        InventoryType.RetainerCrystals,
+        InventoryType.RetainerMarket,
+        InventoryType.RetainerPage1,
+        InventoryType.RetainerPage2,
+        InventoryType.RetainerPage3,
+        InventoryType.RetainerPage4,
+        InventoryType.RetainerPage5,
+        InventoryType.RetainerPage6,
+        InventoryType.RetainerPage7,
+        InventoryType.RetainerEquippedItems,
+        InventoryType.SaddleBag1,
+        InventoryType.SaddleBag2,
+        InventoryType.FreeCompanyCrystals,
+        InventoryType.FreeCompanyPage1,
+        InventoryType.FreeCompanyPage2,
+        InventoryType.FreeCompanyPage3,
+        InventoryType.FreeCompanyPage4,
+        InventoryType.FreeCompanyPage5,
+        InventoryType.HousingExteriorAppearance,
+        InventoryType.HousingExteriorStoreroom,
+        InventoryType.HousingInteriorAppearance,
+        InventoryType.HousingInteriorStoreroom1,
+        InventoryType.HousingInteriorStoreroom2,
+        InventoryType.HousingInteriorStoreroom3,
+        InventoryType.HousingInteriorStoreroom4,
+        InventoryType.HousingInteriorStoreroom5,
+        InventoryType.HousingInteriorStoreroom6,
+        InventoryType.HousingInteriorStoreroom7,
+        InventoryType.HousingInteriorStoreroom8,
+        InventoryType.HousingExteriorPlacedItems,
+        InventoryType.HousingInteriorPlacedItems1,
+        InventoryType.HousingInteriorPlacedItems2,
+        InventoryType.HousingInteriorPlacedItems3,
+        InventoryType.HousingInteriorPlacedItems4,
+        InventoryType.HousingInteriorPlacedItems5,
+        InventoryType.HousingInteriorPlacedItems6,
+        InventoryType.HousingInteriorPlacedItems7,
+        InventoryType.HousingInteriorPlacedItems8,
+        InventoryType.PremiumSaddleBag1,
+        InventoryType.PremiumSaddleBag2
+    };
+
+
+    public class ItemDetails
+    {
+        public uint ItemId { get; set; }
+        public uint ItemCount { get; set; }
+        public InventoryType InventoryType { get; set; }
     }
+
     [Newtonsoft.Json.JsonIgnore]
     public MarketDataListing? BestMarketListing => MarketDataResponse?.Listings.OrderBy(l => l.Total).FirstOrDefault();
-    [Newtonsoft.Json.JsonIgnore]
-    public MarketDataResponse? MarketDataResponse { get; private set; }
 
-    [JsonIgnore]
-    private Task? _marketDataTask;
+    [Newtonsoft.Json.JsonIgnore] public MarketDataResponse? MarketDataResponse { get; private set; }
 
-    [JsonIgnore]
-    private int _retries;
+    [JsonIgnore] private Task? _marketDataTask;
 
-    [JsonIgnore]
-    private bool _isFetchingData;
+    [JsonIgnore] private int _retries;
+
+    [JsonIgnore] private bool _isFetchingData;
 
     [Newtonsoft.Json.JsonIgnore]
     public bool IsFetchingData
+
     {
         get
         {
@@ -117,6 +149,7 @@ public class ShoppingListItem
 
     [Newtonsoft.Json.JsonIgnore]
     public int Retries
+
     {
         get
         {
@@ -141,6 +174,7 @@ public class ShoppingListItem
     {
         MarketDataResponse = null;
     }
+
     public async Task GetMarketDataResponseAsync()
     {
         if (!IsMarketable)
@@ -176,7 +210,8 @@ public class ShoppingListItem
 
                 var maxResults = Plugin.Configuration.ShoppingListConfig.MaxResults;
                 var responseString = await client
-                    .GetStringAsync($"https://universalis.app/api/v2/{Plugin.Configuration.ShoppingListConfig.ShoppingRegion.ToUniversalisString()}/{ItemId}?listings={maxResults}&entries={maxResults}")
+                    .GetStringAsync(
+                        $"https://universalis.app/api/v2/{Plugin.Configuration.ShoppingListConfig.ShoppingRegion.ToUniversalisString()}/{ItemId}?listings={maxResults}&entries={maxResults}")
                     .ConfigureAwait(false);
 
                 if (!string.IsNullOrEmpty(responseString))
@@ -202,6 +237,7 @@ public class ShoppingListItem
                     {
                         _retries++;
                     }
+
                     await Task.Delay(2000);
                 }
             }
@@ -211,13 +247,14 @@ public class ShoppingListItem
                 {
                     _retries++;
                 }
+
                 await Task.Delay(2000);
             }
         }
+
         lock (this)
         {
             _isFetchingData = false;
         }
     }
-
 }

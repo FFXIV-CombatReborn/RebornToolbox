@@ -11,6 +11,7 @@ using System.Numerics;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using FFXIVClientStructs.FFXIV.Client.Game;
 
 namespace RebornToolbox.IPC
 {
@@ -151,4 +152,109 @@ namespace RebornToolbox.IPC
         internal static void Dispose()
             => IPCSubscriber_Common.DisposeAll(_disposalTokens);
     }
+
+    internal static class AllaganTools_IPCSubscriber
+{
+    private static EzIPCDisposalToken[] _disposalTokens = EzIPC.Init(typeof(AllaganTools_IPCSubscriber), "AllaganTools");
+
+    internal static bool IsEnabled
+        => IPCSubscriber_Common.IsReady("AllaganTools");
+
+    [EzIPC("AllaganTools.InventoryCountByType", applyPrefix: false)]
+    internal static readonly Func<uint, ulong?, uint> InventoryCountByType;
+
+    [EzIPC("AllaganTools.InventoryCountByTypes", applyPrefix: false)]
+    internal static readonly Func<uint[], ulong?, uint> InventoryCountByTypes;
+
+    [EzIPC("AllaganTools.ItemCount", applyPrefix: false)]
+    internal static readonly Func<uint, ulong, int, uint> ItemCount;
+
+    [EzIPC("AllaganTools.ItemCountHQ", applyPrefix: false)]
+    internal static readonly Func<uint, ulong, int, uint> ItemCountHQ;
+
+    [EzIPC("AllaganTools.ItemCountOwned", applyPrefix: false)]
+    internal static readonly Func<uint, bool, uint[], uint> ItemCountOwned;
+
+    [EzIPC("AllaganTools.EnableUiFilter", applyPrefix: false)]
+    internal static readonly Func<string, bool> EnableUiFilter;
+
+    [EzIPC("AllaganTools.DisableUiFilter", applyPrefix: false)]
+    internal static readonly Func<bool> DisableUiFilter;
+
+    [EzIPC("AllaganTools.ToggleUiFilter", applyPrefix: false)]
+    internal static readonly Func<string, bool> ToggleUiFilter;
+
+    [EzIPC("AllaganTools.EnableBackgroundFilter", applyPrefix: false)]
+    internal static readonly Func<string, bool> EnableBackgroundFilter;
+
+    [EzIPC("AllaganTools.DisableBackgroundFilter", applyPrefix: false)]
+    internal static readonly Func<bool> DisableBackgroundFilter;
+
+    [EzIPC("AllaganTools.ToggleBackgroundFilter", applyPrefix: false)]
+    internal static readonly Func<string, bool> ToggleBackgroundFilter;
+
+    [EzIPC("AllaganTools.EnableCraftList", applyPrefix: false)]
+    internal static readonly Func<string, bool> EnableCraftList;
+
+    [EzIPC("AllaganTools.DisableCraftList", applyPrefix: false)]
+    internal static readonly Func<bool> DisableCraftList;
+
+    [EzIPC("AllaganTools.ToggleCraftList", applyPrefix: false)]
+    internal static readonly Func<string, bool> ToggleCraftList;
+
+    [EzIPC("AllaganTools.AddItemToCraftList", applyPrefix: false)]
+    internal static readonly Func<string, uint, uint, bool> AddItemToCraftList;
+
+    [EzIPC("AllaganTools.RemoveItemFromCraftList", applyPrefix: false)]
+    internal static readonly Func<string, uint, uint, bool> RemoveItemFromCraftList;
+
+    [EzIPC("AllaganTools.GetFilterItems", applyPrefix: false)]
+    internal static readonly Func<string, Dictionary<uint, uint>> GetFilterItems;
+
+    [EzIPC("AllaganTools.GetCraftItems", applyPrefix: false)]
+    internal static readonly Func<string, Dictionary<uint, uint>> GetCraftItems;
+
+    [EzIPC("AllaganTools.GetRetrievalItems", applyPrefix: false)]
+    internal static readonly Func<Dictionary<uint, uint>> GetRetrievalItems;
+
+    [EzIPC("AllaganTools.GetCharacterItems", applyPrefix: false)]
+    internal static readonly Func<ulong, HashSet<ulong[]>> GetCharacterItems;
+
+    [EzIPC("AllaganTools.GetCharactersOwnedByActive", applyPrefix: false)]
+    internal static readonly Func<bool, HashSet<ulong>> GetCharactersOwnedByActive;
+
+    [EzIPC("AllaganTools.GetCharacterItemsByType", applyPrefix: false)]
+    internal static readonly Func<ulong, uint, HashSet<ulong[]>> GetCharacterItemsByType;
+
+    [EzIPC("AllaganTools.ItemAdded", applyPrefix: false)]
+    internal static readonly Func<(uint, InventoryItem.ItemFlags, ulong, uint), bool> ItemAdded;
+
+    [EzIPC("AllaganTools.ItemRemoved", applyPrefix: false)]
+    internal static readonly Func<(uint, InventoryItem.ItemFlags, ulong, uint), bool> ItemRemoved;
+
+    [EzIPC("AllaganTools.GetCraftLists", applyPrefix: false)]
+    internal static readonly Func<Dictionary<string, string>> GetCraftLists;
+
+    [EzIPC("AllaganTools.GetSearchFilters", applyPrefix: false)]
+    internal static readonly Func<Dictionary<string, string>> GetSearchFilters;
+
+    [EzIPC("AllaganTools.AddNewCraftList", applyPrefix: false)]
+    internal static readonly Func<string, Dictionary<uint, uint>, string> AddNewCraftList;
+
+    [EzIPC("AllaganTools.CurrentCharacter", applyPrefix: false)]
+    internal static readonly Func<ulong> CurrentCharacter;
+
+    [EzIPC("AllaganTools.RetainerChanged", applyPrefix: false)]
+    internal static readonly Func<ulong?, bool> RetainerChanged;
+
+    [EzIPC("AllaganTools.IsInitialized", applyPrefix: false)]
+    internal static readonly Func<bool> IsInitialized;
+
+    [EzIPC("AllaganTools.Initialized", applyPrefix: false)]
+    internal static readonly Func<bool, bool> Initialized;
+
+    internal static void Dispose()
+        => IPCSubscriber_Common.DisposeAll(_disposalTokens);
+}
+
 }

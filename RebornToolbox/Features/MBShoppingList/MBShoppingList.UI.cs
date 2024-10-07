@@ -103,7 +103,8 @@ public class MBShoppingList_UI : Window
 
         ImGui.PopItemWidth();
 
-        ImGui.Text($"Amount in Inventory: {item.InventoryCount}");
+        ImGui.Text($"Already Owned: {item.InventoryCount}");
+        ImGuiEx.Tooltip("Amount of this item you have across all characters (including retainers and alts)\nSourced from Allagan Tools\nSee Allagan Tools for detailed information");
 
         string buttonLabel;
         string buttonDescription;
