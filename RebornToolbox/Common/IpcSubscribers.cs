@@ -226,12 +226,6 @@ namespace RebornToolbox.IPC
     [EzIPC("AllaganTools.GetCharacterItemsByType", applyPrefix: false)]
     internal static readonly Func<ulong, uint, HashSet<ulong[]>> GetCharacterItemsByType;
 
-    [EzIPC("AllaganTools.ItemAdded", applyPrefix: false)]
-    internal static readonly Func<(uint, InventoryItem.ItemFlags, ulong, uint), bool> ItemAdded;
-
-    [EzIPC("AllaganTools.ItemRemoved", applyPrefix: false)]
-    internal static readonly Func<(uint, InventoryItem.ItemFlags, ulong, uint), bool> ItemRemoved;
-
     [EzIPC("AllaganTools.GetCraftLists", applyPrefix: false)]
     internal static readonly Func<Dictionary<string, string>> GetCraftLists;
 
