@@ -68,7 +68,12 @@ public class ChocoboRacing
             return;
         }
 
-        if (!IsRunning || !GenericHelpers.IsScreenReady()) return;
+        if (!IsRunning) return;
+        if (!GenericHelpers.IsScreenReady())
+        {
+            IsMoving = false;
+            return;
+        }
         if (Plugin.Configuration.ChocoboRacingConfig.StopAtMaxRank && ChocoboLevel == 40)
         {
             if (IsMoving)
