@@ -47,7 +47,7 @@ public class ShoppingListItem
     public uint ItemId { get; set; }
 
     public bool IsMarketable { get; private set; }
-    public int Quantity { get; set; }
+    public long Quantity { get; set; }
 
     public long InventoryCount => AllaganTools_IPCSubscriber.IsInitialized() ? AllaganTools_IPCSubscriber.ItemCountOwned(ItemId, false, ValidInventoryTypes.Select(i => (uint)i).ToArray()) : 0;
 

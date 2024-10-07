@@ -1,7 +1,9 @@
 ﻿using System.Numerics;
 using System.Text.RegularExpressions;
+using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.ImGuiFileDialog;
+using Dalamud.Interface.ImGuiSeStringRenderer;
 using Dalamud.Interface.Style;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
@@ -18,6 +20,7 @@ using FFXIVClientStructs.FFXIV.Client.UI.Info;
 using ImGuiNET;
 using Lumina.Excel.GeneratedSheets;
 using OtterGui;
+using OtterGui.Classes;
 using RebornToolbox.Features.MBShoppingList.Models;
 using RebornToolbox.IPC;
 
@@ -93,7 +96,15 @@ public class MBShoppingList_UI : Window
             return;
         }
 
-        int quantity = item.Quantity;
+        if (ImGui.Selectable(item.Name))
+        {
+            var seString = new SeStringBuilder().AddText($"[Reborn Toolbox]").AddItemLink(item.ItemId).BuiltString;
+            Svc.Chat.Print(seString);
+        }
+        ImGuiEx.Tooltip("Click to print item link in chat");
+
+
+        int quantity = (int)item.Quantity;
         ImGui.PushItemWidth(100);
         if (ImGui.InputInt("Needed Quantity", ref quantity))
         {
