@@ -49,32 +49,6 @@ public class MBShoppingList
 
         TaskManager = new TaskManager(DefaultTaskConfig);
         LoadList();
-
-        Svc.GameInventory.InventoryChanged += OnInventoryChanged;
-    }
-
-    private void OnInventoryChanged(IReadOnlyCollection<InventoryEventArgs> events)
-    {
-        if (!Plugin.Configuration.ShoppingListConfig.Enabled ||
-            !Plugin.Configuration.ShoppingListConfig.RemoveQuantityAutomatically)
-            return;
-
-        bool updated = false;
-        foreach (var e in events)
-        {
-            var item = WantedItems.FirstOrDefault(i => i.ItemId == e.Item.ItemId);
-
-            if (item != null)
-            {
-                updated = true;
-                Svc.Log.Debug($"Item {item.Name} has moved into inventory.");
-                item.Quantity -= (int)e.Item.Quantity;
-                if (item.Quantity < 0)
-                    item.Quantity = 0;
-            }
-        }
-        if (updated)
-            SaveList();
     }
 
     public void SaveList()

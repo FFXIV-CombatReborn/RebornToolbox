@@ -49,7 +49,7 @@ public class ShoppingListItem
     public bool IsMarketable { get; private set; }
     public int Quantity { get; set; }
 
-    public long InventoryCount => AllaganTools_IPCSubscriber.ItemCountOwned(ItemId, false, ValidInventoryTypes.Select(i => (uint)i).ToArray());
+    public long InventoryCount => AllaganTools_IPCSubscriber.IsInitialized() ? AllaganTools_IPCSubscriber.ItemCountOwned(ItemId, false, ValidInventoryTypes.Select(i => (uint)i).ToArray()) : 0;
 
     [Newtonsoft.Json.JsonIgnore]
     private List<InventoryType> ValidInventoryTypes = new List<InventoryType>()
