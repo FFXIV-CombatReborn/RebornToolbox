@@ -52,8 +52,15 @@ public class MainWindow : Window
                 Plugin.Configuration.ShoppingListConfig.RemoveQuantityAutomatically = inventoryCheck;
                 Plugin.Configuration.SaveConfig();
             }
-
             ImGuiEx.Tooltip("Automatically subtract from needed quantity when items are added to your inventory.");
+
+            var allChars = Plugin.Configuration.ShoppingListConfig.AllCharactersInventory;
+            if (ImGui.Checkbox("Consider Inventory Counts from All Characters", ref allChars))
+            {
+                Plugin.Configuration.ShoppingListConfig.AllCharactersInventory = allChars;
+                Plugin.Configuration.SaveConfig();
+            }
+            ImGuiEx.Tooltip("Whether or not to pull items from every character's inventory using Allagan Tools");
         }
 
         ImGui.Unindent();

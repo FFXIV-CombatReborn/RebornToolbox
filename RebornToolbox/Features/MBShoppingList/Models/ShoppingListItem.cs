@@ -49,7 +49,26 @@ public class ShoppingListItem
     public bool IsMarketable { get; private set; }
     public long Quantity { get; set; }
 
-    public long InventoryCount => AllaganTools_IPCSubscriber.IsInitialized() ? AllaganTools_IPCSubscriber.ItemCountOwned(ItemId, false, ValidInventoryTypes.Select(i => (uint)i).ToArray()) : 0;
+    [Newtonsoft.Json.JsonIgnore]
+    private DateTime _inventoryLastUpdated = DateTime.MinValue;
+
+    [Newtonsoft.Json.JsonIgnore]
+    private long _inventoryCount = 0;
+
+    [Newtonsoft.Json.JsonIgnore]
+    public long InventoryCount
+    {
+        get
+        {
+            if (DateTime.Now.Subtract(_inventoryLastUpdated).TotalSeconds > 1)
+            {
+                _inventoryLastUpdated = DateTime.Now;
+                _inventoryCount = AllaganTools_IPCSubscriber.IsInitialized() ? AllaganTools_IPCSubscriber.ItemCountOwned(ItemId, !Plugin.Configuration.ShoppingListConfig.AllCharactersInventory, ValidInventoryTypes.Select(i => (uint)i).ToArray()) : 0;
+            }
+
+            return _inventoryCount;
+        }
+    }
 
     [Newtonsoft.Json.JsonIgnore]
     private List<InventoryType> ValidInventoryTypes = new List<InventoryType>()

@@ -10,4 +10,5 @@ public class MBShoppingList_Config
     public int LifeStreamTimeout { get; set; } = 300;
     public bool UseVnavPathing { get; set; } = false;
     public bool RemoveQuantityAutomatically { get; set; } = false;
+    public bool AllCharactersInventory { get; set; } = false;
 }
