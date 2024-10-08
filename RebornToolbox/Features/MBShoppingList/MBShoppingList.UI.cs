@@ -42,19 +42,31 @@ public class MBShoppingList_UI : Window
     public override void Draw()
     {
         DrawItemAdd();
-        ImGui.SameLine();
         if (ImGui.Button("Import MakePlace List"))
         {
             SelectFile();
         }
+        ImGui.SameLine();
+        if (ImGui.Button("Import from Clipboard"))
+        {
+            ExtractClipboardText();
+        }
+        ImGuiEx.Tooltip("Import items from clipboard using the following format:\n'10x Ipe Log'\n'999x Iron Ore");
 
-        RenderRegionTypeComboBox();
-        var maxResults = Plugin.Configuration.ShoppingListConfig.MaxResults;
+        if (ImGuiUtil.GenericEnumCombo("Region/Datacenter", 300, Plugin.Configuration.ShoppingListConfig.ShoppingRegion, out RegionType newRegion, r => r.ToFriendlyString()))
+        {
+            Plugin.Configuration.ShoppingListConfig.ShoppingRegion = newRegion;
+            Plugin.Configuration.SaveConfig();
+        }
+
+        ImGui.SetNextItemWidth(100);
+        int maxResults = Plugin.Configuration.ShoppingListConfig.MaxResults;
         if (ImGui.InputInt("Max Search Results", ref maxResults))
         {
             Plugin.Configuration.ShoppingListConfig.MaxResults = maxResults;
             Plugin.Configuration.SaveConfig();
         }
+
 
         if (Plugin.Configuration.ExpertMode)
         {
@@ -84,6 +96,56 @@ public class MBShoppingList_UI : Window
         _fileDialogManager.Draw();
     }
 
+    private void ExtractClipboardText()
+    {
+        var clipboardText = ImGuiUtil.GetClipboardText();
+        if (!string.IsNullOrEmpty(clipboardText))
+        {
+            try
+            {
+                Dictionary<string, int> items = new Dictionary<string, int>();
+
+                // Regex pattern
+                var pattern = @"\b(\d+)x\s(.+)\b";
+                var matches = Regex.Matches(clipboardText, pattern);
+
+                // Loop through matches and add them to dictionary
+                foreach (Match match in matches)
+                {
+                    var quantity = int.Parse(match.Groups[1].Value);
+                    var itemName = match.Groups[2].Value;
+                    items[itemName] = quantity;
+                }
+
+                bool saveNeeded = false;
+                foreach (var item in items)
+                {
+                    var itemObj = MBShoppingList.AllItems.FirstOrDefault(i => string.Equals(i.Name, item.Key, StringComparison.OrdinalIgnoreCase));
+                    if (itemObj is null)
+                    {
+                        Svc.Log.Error($"Item {item.Key} not found");
+                        continue;
+                    }
+
+                    var shoppingListItem = new ShoppingListItem(itemObj, item.Value);
+                    _manager.WantedItems.Add(shoppingListItem);
+                    saveNeeded = true;
+                }
+                if (saveNeeded)
+                    _manager.SaveList();
+            }
+            catch (Exception e)
+            {
+                Svc.Chat.PrintError("[Reborn Toolbox] Error importing clipboard text. See /xllog for details.");
+                Svc.Log.Error($"Error importing from clipboard: {e}");
+            }
+        }
+        else
+        {
+            Svc.Chat.PrintError($"Clipboard text is empty or invalid");
+        }
+    }
+
     private DateTime _lastMassRefresh = DateTime.MinValue;
 
     private void DrawWantedItem(ShoppingListItem? item)
@@ -101,6 +163,7 @@ public class MBShoppingList_UI : Window
             var seString = new SeStringBuilder().AddText($"[Reborn Toolbox]").AddItemLink(item.ItemId).BuiltString;
             Svc.Chat.Print(seString);
         }
+
         ImGuiEx.Tooltip("Click to print item link in chat");
 
 
@@ -115,7 +178,8 @@ public class MBShoppingList_UI : Window
         ImGui.PopItemWidth();
 
         ImGui.Text($"Already Owned: {item.InventoryCount}");
-        ImGuiEx.Tooltip("Amount of this item you have across all characters (including retainers and alts)\nSourced from Allagan Tools\nSee Allagan Tools for detailed information");
+        ImGuiEx.Tooltip(
+            "Amount of this item you have across all characters (including retainers and alts)\nSourced from Allagan Tools\nSee Allagan Tools for detailed information");
 
         string buttonLabel;
         string buttonDescription;
@@ -183,7 +247,9 @@ public class MBShoppingList_UI : Window
                 Svc.Chat.PrintError($"[Reborn Toolbox] LifeStream is required to move between servers");
                 return;
             }
-            _manager.TaskManager.Enqueue(() => Lifestream_IPCSubscriber.ExecuteCommand(obj.WorldName), _manager.LifeStreamTaskConfig);
+
+            _manager.TaskManager.Enqueue(() => Lifestream_IPCSubscriber.ExecuteCommand(obj.WorldName),
+                _manager.LifeStreamTaskConfig);
             _manager.TaskManager.Enqueue(() => !Lifestream_IPCSubscriber.IsBusy(), _manager.LifeStreamTaskConfig);
             _manager.TaskManager.Enqueue(GenericHelpers.IsScreenReady);
             _manager.TaskManager.Enqueue(_manager.QueueMoveToMarketboardTasks);
@@ -200,8 +266,11 @@ public class MBShoppingList_UI : Window
     {
         AddonItemSearch* addonItemSearch = (AddonItemSearch*)Svc.GameGui.GetAddonByName("ItemSearch");
         var disabled = addonItemSearch == null;
-        var description = disabled ? "Automatically search for this item on the Marketboard (MarketBoard window must be open)" : "Automatically search for this item on the Marketboard";
-        if (ImGuiUtil.DrawDisabledButton($"Search Marketboard for Item##{item.ItemId}", new Vector2(), description, disabled))
+        var description = disabled
+            ? "Automatically search for this item on the Marketboard (MarketBoard window must be open)"
+            : "Automatically search for this item on the Marketboard";
+        if (ImGuiUtil.DrawDisabledButton($"Search Marketboard for Item##{item.ItemId}", new Vector2(), description,
+                disabled))
         {
             addonItemSearch->SearchTextInput->SetText(item.Name);
             addonItemSearch->RunSearch();
@@ -277,20 +346,6 @@ public class MBShoppingList_UI : Window
         {
             _selectedItem = null;
             _searchTerm = string.Empty;
-        }
-    }
-
-    private static readonly string[] RegionNames = ["North America", "Europe", "Japan", "Oceania"];
-
-    public void RenderRegionTypeComboBox()
-    {
-        int currentRegionIndex = (int)Plugin.Configuration.ShoppingListConfig.ShoppingRegion;
-
-        if (ImGui.Combo("Select Region", ref currentRegionIndex, RegionNames, RegionNames.Length))
-        {
-            Plugin.Configuration.ShoppingListConfig.ShoppingRegion = (RegionType)currentRegionIndex;
-
-            Plugin.Configuration.SaveConfig();
         }
     }
 
