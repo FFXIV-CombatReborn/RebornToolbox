@@ -7,9 +7,11 @@ using ECommons.DalamudServices;
 using ECommons.Reflection;
 using ECommons.Throttlers;
 using FFXIVClientStructs.FFXIV.Client.Game;
+using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Component.GUI;
+using Lumina.Excel.GeneratedSheets;
 
 namespace RebornToolbox.Features.ChocoboRacing;
 
@@ -17,8 +19,11 @@ public class ChocoboRacing
 {
     public bool IsRunning { get; set; } = false;
 
+    public IEnumerable<ContentRoulette> ContentRoulettes;
+
     public ChocoboRacing()
     {
+        ContentRoulettes = Svc.Data.GetExcelSheet<ContentRoulette>(Svc.ClientState.ClientLanguage)!;
         Svc.Framework.Update += OnUpdate;
     }
 
@@ -127,14 +132,21 @@ public class ChocoboRacing
             }
 
             var selectedDutyName = addon->AtkValues[18].GetValueAsString();
-            if (selectedDutyName.Contains(Plugin.Configuration.ChocoboRacingConfig.RaceRoute.ToFriendlyString(), StringComparison.OrdinalIgnoreCase))
+            if (selectedDutyName.Contains(GetSelectedDutyName(), StringComparison.InvariantCultureIgnoreCase))
             {
                 Callback.Fire((AtkUnitBase*)addon, true, 12, 0);
             }
         }
     }
 
-// Credit: https://github.com/ffxivcode/AutoDuty/blob/26a61eefdba148bc5f46694f915f402315e9f128/AutoDuty/Helpers/QueueHelper.cs#L247
+    private string GetSelectedDutyName()
+    {
+        var routeId = (byte)Plugin.Configuration.ChocoboRacingConfig.RaceRoute;
+        var row = ContentRoulettes.First(c => c.RowId == routeId);
+        return row.Name.ToString();
+    }
+
+    // Credit: https://github.com/ffxivcode/AutoDuty/blob/26a61eefdba148bc5f46694f915f402315e9f128/AutoDuty/Helpers/QueueHelper.cs#L247
     private uint HeadersCount(uint before, List<AtkComponentTreeListItem> list)
     {
         uint count = 0;

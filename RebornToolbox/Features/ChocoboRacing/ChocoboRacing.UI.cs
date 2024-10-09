@@ -18,6 +18,8 @@ public class ChocoboRacing_UI : Window
         if (ImGui.Checkbox("Enable", ref enabled))
         {
             _chocoboRacing.IsRunning = enabled;
+            if (!enabled && _chocoboRacing.IsMoving)
+                _chocoboRacing.IsMoving = false;
         }
         var route = Plugin.Configuration.ChocoboRacingConfig.RaceRoute;
         if (ImGuiUtil.GenericEnumCombo("Race Route", 150, route, out var newRoute, r => r.ToFriendlyString()))
