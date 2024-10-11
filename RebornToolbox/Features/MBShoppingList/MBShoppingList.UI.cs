@@ -60,12 +60,6 @@ public class MBShoppingList_UI : Window
         }
 
         ImGui.SetNextItemWidth(100);
-        int maxResults = Plugin.Configuration.ShoppingListConfig.MaxResults;
-        if (ImGui.InputInt("Max Search Results", ref maxResults))
-        {
-            Plugin.Configuration.ShoppingListConfig.MaxResults = maxResults;
-            Plugin.Configuration.SaveConfig();
-        }
 
 
         if (Plugin.Configuration.ExpertMode)

@@ -1,4 +1,5 @@
 ﻿using System.Runtime.Serialization;
+using Dalamud.Plugin.Ipc.Exceptions;
 using ECommons;
 using ECommons.DalamudServices;
 using FFXIVClientStructs.FFXIV.Client.Game;
@@ -62,8 +63,19 @@ public class ShoppingListItem
         {
             if (DateTime.Now.Subtract(_inventoryLastUpdated).TotalSeconds > 1)
             {
-                _inventoryLastUpdated = DateTime.Now;
-                _inventoryCount = AllaganTools_IPCSubscriber.IsInitialized() ? AllaganTools_IPCSubscriber.ItemCountOwned(ItemId, !Plugin.Configuration.ShoppingListConfig.AllCharactersInventory, ValidInventoryTypes.Select(i => (uint)i).ToArray()) : 0;
+                try
+                {
+                    _inventoryCount = AllaganTools_IPCSubscriber.IsInitialized()
+                        ? AllaganTools_IPCSubscriber.ItemCountOwned(ItemId,
+                            !Plugin.Configuration.ShoppingListConfig.AllCharactersInventory,
+                            ValidInventoryTypes.Select(i => (uint)i).ToArray())
+                        : 0;
+                    _inventoryLastUpdated = DateTime.Now;
+                }
+                catch (Exception ex)
+                {
+                    Svc.Log.Error($"Allagan Tools IPC failed: {ex.Message}");
+                }
             }
 
             return _inventoryCount;
@@ -227,10 +239,9 @@ public class ShoppingListItem
             {
                 using var client = new HttpClient();
 
-                var maxResults = Plugin.Configuration.ShoppingListConfig.MaxResults;
                 var responseString = await client
                     .GetStringAsync(
-                        $"https://universalis.app/api/v2/{Plugin.Configuration.ShoppingListConfig.ShoppingRegion.ToUniversalisString()}/{ItemId}?listings={maxResults}&entries={maxResults}")
+                        $"https://universalis.app/api/v2/{Plugin.Configuration.ShoppingListConfig.ShoppingRegion.ToUniversalisString()}/{ItemId}")
                     .ConfigureAwait(false);
 
                 if (!string.IsNullOrEmpty(responseString))

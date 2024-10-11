@@ -75,6 +75,8 @@ public class MBShoppingList
             return;
 
         wantedItem.Quantity -= itemDetails.Item4;
+        if (wantedItem.Quantity < 0)
+            wantedItem.Quantity = 0;
     }
 
 
