@@ -22,7 +22,7 @@ public class ChocoboRacing_UI : Window
                 _chocoboRacing.IsMoving = false;
         }
         var route = Plugin.Configuration.ChocoboRacingConfig.RaceRoute;
-        if (ImGuiUtil.GenericEnumCombo("Race Route", 150, route, out var newRoute, r => r.ToFriendlyString()))
+        if (ImGuiUtil.GenericEnumCombo("Race Route", 200, route, out var newRoute, r => r.ToFriendlyString()))
         {
             Plugin.Configuration.ChocoboRacingConfig.RaceRoute = newRoute;
             Plugin.Configuration.SaveConfig();

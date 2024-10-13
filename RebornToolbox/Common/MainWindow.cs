@@ -1,6 +1,8 @@
-﻿using Dalamud.Interface.Windowing;
+﻿using Dalamud.Game.ClientState.Keys;
+using Dalamud.Interface.Windowing;
 using ECommons.ImGuiMethods;
 using ImGuiNET;
+using OtterGui;
 
 namespace RebornToolbox.Common;
 
@@ -96,6 +98,14 @@ public class MainWindow : Window
             if (ImGui.Checkbox("Always Run (Ignore stamina/lathered status)", ref alwaysRun))
             {
                 Plugin.Configuration.ChocoboRacingConfig.AlwaysRun = alwaysRun;
+                Plugin.Configuration.SaveConfig();
+            }
+
+            var moveForwardKey = Plugin.Configuration.ChocoboRacingConfig.MoveForwardKey;
+            if (ImGuiUtil.GenericEnumCombo("Forward Movement Key", 150, moveForwardKey, out VirtualKey forwardKey,
+                    k => k.ToString()))
+            {
+                Plugin.Configuration.ChocoboRacingConfig.MoveForwardKey = forwardKey;
                 Plugin.Configuration.SaveConfig();
             }
 
