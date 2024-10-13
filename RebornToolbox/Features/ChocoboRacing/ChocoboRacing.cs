@@ -42,13 +42,13 @@ public class ChocoboRacing
 
     public bool IsMoving
     {
-        get { return Svc.KeyState[VirtualKey.W]; }
+        get { return Svc.KeyState[Plugin.Configuration.ChocoboRacingConfig.MoveForwardKey]; }
         set
         {
-            if (Svc.KeyState[VirtualKey.W] != value)
+            if (Svc.KeyState[Plugin.Configuration.ChocoboRacingConfig.MoveForwardKey] != value)
             {
-                if (value) DalamudReflector.SetKeyState(VirtualKey.W, 1);
-                else DalamudReflector.SetKeyState(VirtualKey.W, 0);
+                if (value) DalamudReflector.SetKeyState(Plugin.Configuration.ChocoboRacingConfig.MoveForwardKey, 1);
+                else DalamudReflector.SetKeyState(Plugin.Configuration.ChocoboRacingConfig.MoveForwardKey, 0);
             }
         }
     }
