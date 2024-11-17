@@ -12,7 +12,7 @@ using ECommons.DalamudServices;
 using ECommons.GameHelpers;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
-using Lumina.Excel.GeneratedSheets;
+using Lumina.Excel.Sheets;
 using Newtonsoft.Json;
 using RebornToolbox.Features.MBShoppingList.Models;
 using RebornToolbox.IPC;
@@ -46,7 +46,7 @@ public class MBShoppingList
     public MBShoppingList()
     {
         AllItems = Svc.Data.GameData.GetExcelSheet<Item>()!.ToList();
-        MarketableItems = AllItems.Where(i => i.ItemSearchCategory.Row != 0).ToList();
+        MarketableItems = AllItems.Where(i => i.ItemSearchCategory.RowId != 0).ToList();
 
         Chat = new Chat();
 

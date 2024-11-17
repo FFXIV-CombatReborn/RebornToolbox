@@ -18,7 +18,7 @@ using FFXIVClientStructs.FFXIV.Client.System.String;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Info;
 using ImGuiNET;
-using Lumina.Excel.GeneratedSheets;
+using Lumina.Excel.Sheets;
 using OtterGui;
 using OtterGui.Classes;
 using RebornToolbox.Features.MBShoppingList.Models;
@@ -114,14 +114,14 @@ public class MBShoppingList_UI : Window
                 bool saveNeeded = false;
                 foreach (var item in items)
                 {
-                    var itemObj = MBShoppingList.AllItems.FirstOrDefault(i => string.Equals(i.Name, item.Key, StringComparison.OrdinalIgnoreCase));
+                    var itemObj = MBShoppingList.AllItems.FirstOrNull(i => string.Equals(i.Name.ToString(), item.Key, StringComparison.OrdinalIgnoreCase));
                     if (itemObj is null)
                     {
                         Svc.Log.Error($"Item {item.Key} not found");
                         continue;
                     }
 
-                    var shoppingListItem = new ShoppingListItem(itemObj, item.Value);
+                    var shoppingListItem = new ShoppingListItem(itemObj.Value, item.Value);
                     _manager.WantedItems.Add(shoppingListItem);
                     saveNeeded = true;
                 }
@@ -307,7 +307,7 @@ public class MBShoppingList_UI : Window
                 ImGui.BeginChild($"ItemList", new Vector2(0, 150), true);
                 foreach (var item in matchingItems)
                 {
-                    if (ImGui.Selectable(item.Name))
+                    if (ImGui.Selectable(item.Name.ToString()))
                     {
                         _selectedItem = item;
                         _searchTerm = item.Name.ToString();
@@ -327,7 +327,7 @@ public class MBShoppingList_UI : Window
                 return;
             }
 
-            var shoppingListItem = new ShoppingListItem(_selectedItem, 1);
+            var shoppingListItem = new ShoppingListItem(_selectedItem.Value, 1);
             _manager.WantedItems.Add(shoppingListItem);
             _searchTerm = string.Empty;
             _selectedItem = null;
@@ -395,12 +395,12 @@ public class MBShoppingList_UI : Window
                     itemName += " Dye";
                 int quantity = int.Parse(match.Groups[2].Value.Trim());
 
-                var item = MBShoppingList.AllItems.FirstOrDefault(i =>
-                    string.Equals(i.Name, itemName, StringComparison.OrdinalIgnoreCase));
+                var item = MBShoppingList.AllItems.FirstOrNull(i =>
+                    string.Equals(i.Name.ToString(), itemName, StringComparison.OrdinalIgnoreCase));
                 if (item == null && string.Equals(startSection, "Dyes", StringComparison.OrdinalIgnoreCase))
                 {
-                    item = MBShoppingList.AllItems.FirstOrDefault(i =>
-                        string.Equals(i.Name, $"General-purpose {itemName}", StringComparison.OrdinalIgnoreCase));
+                    item = MBShoppingList.AllItems.FirstOrNull(i =>
+                        string.Equals(i.Name.ToString(), $"General-purpose {itemName}", StringComparison.OrdinalIgnoreCase));
                 }
 
                 if (item == null)
@@ -409,7 +409,7 @@ public class MBShoppingList_UI : Window
                     continue;
                 }
 
-                var existingItem = _manager.WantedItems.FirstOrDefault(i => i.ItemId == item.RowId);
+                var existingItem = _manager.WantedItems.FirstOrDefault(i => i.ItemId == item.Value.RowId);
 
                 // Add or update the item in the dictionary
                 if (existingItem != null)
@@ -418,7 +418,7 @@ public class MBShoppingList_UI : Window
                 }
                 else
                 {
-                    _manager.WantedItems.Add(new ShoppingListItem(item, quantity));
+                    _manager.WantedItems.Add(new ShoppingListItem(item.Value, quantity));
                 }
             }
         }

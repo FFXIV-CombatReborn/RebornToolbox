@@ -3,7 +3,8 @@ using Dalamud.Plugin.Ipc.Exceptions;
 using ECommons;
 using ECommons.DalamudServices;
 using FFXIVClientStructs.FFXIV.Client.Game;
-using Lumina.Excel.GeneratedSheets;
+using Lumina.Excel.Sheets;
+using Lumina.Excel.Sheets;
 using Newtonsoft.Json;
 using RebornToolbox.IPC;
 
@@ -11,14 +12,14 @@ namespace RebornToolbox.Features.MBShoppingList.Models;
 
 public class ShoppingListItem
 {
-    [Newtonsoft.Json.JsonIgnore] private Item _itemRecord;
+    [Newtonsoft.Json.JsonIgnore] private Item? _itemRecord;
 
     public ShoppingListItem(Item item, int quantity)
     {
         ItemId = item.RowId;
         Quantity = quantity;
         _itemRecord = item; // Cache the item here
-        IsMarketable = MBShoppingList.MarketableItems.Contains(ItemRecord);
+        IsMarketable = MBShoppingList.MarketableItems.Contains(ItemRecord!.Value);
     }
 
     public ShoppingListItem()
@@ -29,7 +30,7 @@ public class ShoppingListItem
     internal void OnDeserializedMethod(StreamingContext context)
     {
         // Initialize _itemRecord after deserialization
-        _itemRecord = MBShoppingList.AllItems.FirstOrDefault(x => x.RowId == ItemId);
+        _itemRecord = MBShoppingList.AllItems.FirstOrNull(x => x.RowId == ItemId);
         if (_itemRecord == null)
         {
             // Handle the case where the item is not found
@@ -37,13 +38,13 @@ public class ShoppingListItem
         }
         else
         {
-            IsMarketable = MBShoppingList.MarketableItems.Contains(_itemRecord);
+            IsMarketable = MBShoppingList.MarketableItems.Contains(_itemRecord.Value);
         }
     }
 
-    [Newtonsoft.Json.JsonIgnore] public Item ItemRecord => _itemRecord;
+    [Newtonsoft.Json.JsonIgnore] public Item? ItemRecord => _itemRecord;
 
-    [Newtonsoft.Json.JsonIgnore] public string Name => _itemRecord.Name;
+    [Newtonsoft.Json.JsonIgnore] public string Name => _itemRecord.Value.Name.ToString();
 
     public uint ItemId { get; set; }
 
