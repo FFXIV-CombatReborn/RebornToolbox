@@ -166,11 +166,7 @@ public class ChocoboRacing
 
         var vectorDutyListItems = addonContentsFinder->DutyList->Items;
         List<AtkComponentTreeListItem> listAtkComponentTreeListItems = [];
-        vectorDutyListItems.ForEach(pointAtkComponentTreeListItem =>
-            listAtkComponentTreeListItems.Add(*(pointAtkComponentTreeListItem.Value)));
-
-        Callback.Fire((AtkUnitBase*)addonContentsFinder, true, 3,
-            addonContentsFinder->SelectedRow -
-            (HeadersCount(addonContentsFinder->SelectedRow, listAtkComponentTreeListItems) - 1));
+        vectorDutyListItems.ForEach(pointAtkComponentTreeListItem => listAtkComponentTreeListItems.Add(*(pointAtkComponentTreeListItem.Value)));
+        Callback.Fire((AtkUnitBase*)addonContentsFinder, true, 3, HeadersCount((uint)addonContentsFinder->DutyList->SelectedItemIndex, listAtkComponentTreeListItems) + 1); // - (HeadersCount(addonContentsFinder->DutyList->SelectedItemIndex, listAtkComponentTreeListItems) + 1));
     }
 }
