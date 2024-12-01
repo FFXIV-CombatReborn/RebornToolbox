@@ -118,9 +118,9 @@ public class MBShoppingList
             case 129:
                 MoveToNearestMarketboard();
                 return;
-            // case 130:
-            //     QueueUldahMoveToMarketboardTasks();
-            //     return;
+            case 130:
+                QueueUldahMoveToMarketboardTasks();
+                return;
             case 132:
                 QueueGridMoveToMarketboardTasks();
                 return;
@@ -134,28 +134,23 @@ public class MBShoppingList
 
     private void QueueUldahMoveToMarketboardTasks()
     {
-        TaskManager.Enqueue(() => VNavmesh_IPCSubscriber.Nav_IsReady());
-        TaskManager.Enqueue(() => VNavmesh_IPCSubscriber.SimpleMove_PathfindAndMoveTo(uldahTransitionPosition, false));
-        TaskManager.EnqueueDelay(5000);
-        TaskManager.Enqueue(() =>
-            !VNavmesh_IPCSubscriber.Path_IsRunning() && !VNavmesh_IPCSubscriber.Nav_PathfindInProgress());
+        TaskManager.Enqueue(() => Lifestream_IPCSubscriber.AethernetTeleport("sapphire"));
+        TaskManager.Enqueue(() => Svc.ClientState.TerritoryType == 131);
         TaskManager.Enqueue(GenericHelpers.IsScreenReady);
         TaskManager.Enqueue(() => VNavmesh_IPCSubscriber.Nav_IsReady());
         TaskManager.Enqueue(MoveToNearestMarketboard);
     }
 
     private uint marketboardDataId = 2000402;
+    private uint otherMoreStupidMarketboardDataId = 2000442;
 
     private Vector3 oldGridTransitionPosition = new Vector3(11.458f, 1.275f, -15.702f);
     private Vector3 oldGridBowerHousePosition = new Vector3(141.558f, 13.571f, -97.028f);
 
     private void QueueGridMoveToMarketboardTasks()
     {
-        TaskManager.Enqueue(() => VNavmesh_IPCSubscriber.Nav_IsReady());
-        TaskManager.Enqueue(() =>
-            VNavmesh_IPCSubscriber.SimpleMove_PathfindAndMoveTo(oldGridTransitionPosition, false));
-        TaskManager.Enqueue(() =>
-            !VNavmesh_IPCSubscriber.Path_IsRunning() && !VNavmesh_IPCSubscriber.Nav_PathfindInProgress());
+        TaskManager.Enqueue(() => Lifestream_IPCSubscriber.AethernetTeleport("bower"));
+        TaskManager.Enqueue(() => Svc.ClientState.TerritoryType == 133);
         TaskManager.Enqueue(GenericHelpers.IsScreenReady);
         TaskManager.Enqueue(() => VNavmesh_IPCSubscriber.Nav_IsReady());
         TaskManager.Enqueue(() =>
@@ -168,7 +163,7 @@ public class MBShoppingList
 
     private void MoveToNearestMarketboard()
     {
-        var marketBoard = Svc.Objects.Where(o => o.DataId == marketboardDataId)
+        var marketBoard = Svc.Objects.Where(o => o.DataId == marketboardDataId || o.DataId == otherMoreStupidMarketboardDataId)
             .OrderBy(o => Vector3.Distance(o.Position, Player.Position)).FirstOrDefault();
         if (marketBoard == null)
         {
