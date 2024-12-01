@@ -131,7 +131,9 @@ public class ChocoboRacing
                 return;
             }
 
-            var selectedDutyName = addon->AtkValues[18].GetValueAsString();
+            var selectedDutyName = addon->AtkValues[18].GetValueAsString()
+                .Replace("\u0002\u001a\u0002\u0002\u0003", string.Empty)
+                .Replace("\u0002\u001a\u0002\u0001\u0003", string.Empty);
             if (selectedDutyName.Contains(GetSelectedDutyName(), StringComparison.InvariantCultureIgnoreCase))
             {
                 Callback.Fire((AtkUnitBase*)addon, true, 12, 0);
@@ -145,28 +147,20 @@ public class ChocoboRacing
         var row = ContentRoulettes.First(c => c.RowId == routeId);
         return row.Name.ToString();
     }
-
-    // Credit: https://github.com/ffxivcode/AutoDuty/blob/26a61eefdba148bc5f46694f915f402315e9f128/AutoDuty/Helpers/QueueHelper.cs#L247
-    private uint HeadersCount(uint before, List<AtkComponentTreeListItem> list)
+    private static uint HeadersCount(int before, List<AtkComponentTreeListItem> list)
     {
-        uint count = 0;
-        for (int i = 0; i < before; i++)
-        {
-            if (list[i].UIntValues[0] == 4 || list[i].UIntValues[0] == 2)
-                count++;
-        }
-
-        return count;
+        return (uint)list.Take(before).Count(item => item.UIntValues[0] == 0 || item.UIntValues[0] == 1);
     }
 
-// Credit: https://github.com/ffxivcode/AutoDuty/blob/26a61eefdba148bc5f46694f915f402315e9f128/AutoDuty/Helpers/QueueHelper.cs#L258
     private unsafe void SelectDuty(AddonContentsFinder* addonContentsFinder)
     {
         if (addonContentsFinder == null) return;
-
-        var vectorDutyListItems = addonContentsFinder->DutyList->Items;
-        List<AtkComponentTreeListItem> listAtkComponentTreeListItems = [];
-        vectorDutyListItems.ForEach(pointAtkComponentTreeListItem => listAtkComponentTreeListItems.Add(*(pointAtkComponentTreeListItem.Value)));
-        Callback.Fire((AtkUnitBase*)addonContentsFinder, true, 3, HeadersCount((uint)addonContentsFinder->DutyList->SelectedItemIndex, listAtkComponentTreeListItems) + 1); // - (HeadersCount(addonContentsFinder->DutyList->SelectedItemIndex, listAtkComponentTreeListItems) + 1));
+        var dutyItems = addonContentsFinder->DutyList->Items;
+        var itemList = dutyItems.Select(itemPtr => *(itemPtr.Value)).ToList();
+        int selectedIndex = addonContentsFinder->DutyList->SelectedItemIndex;
+        uint headersBeforeSelected = HeadersCount(selectedIndex, itemList);
+        uint callbackIndex = headersBeforeSelected + 1;
+        Callback.Fire((AtkUnitBase*)addonContentsFinder, true, 3, callbackIndex);
     }
+
 }
