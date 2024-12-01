@@ -151,11 +151,8 @@ public class MBShoppingList
 
     private void QueueGridMoveToMarketboardTasks()
     {
-        TaskManager.Enqueue(() => VNavmesh_IPCSubscriber.Nav_IsReady());
-        TaskManager.Enqueue(() =>
-            VNavmesh_IPCSubscriber.SimpleMove_PathfindAndMoveTo(oldGridTransitionPosition, false));
-        TaskManager.Enqueue(() =>
-            !VNavmesh_IPCSubscriber.Path_IsRunning() && !VNavmesh_IPCSubscriber.Nav_PathfindInProgress());
+        TaskManager.Enqueue(() => Lifestream_IPCSubscriber.AethernetTeleport("bower"));
+        TaskManager.Enqueue(() => Svc.ClientState.TerritoryType == 133);
         TaskManager.Enqueue(GenericHelpers.IsScreenReady);
         TaskManager.Enqueue(() => VNavmesh_IPCSubscriber.Nav_IsReady());
         TaskManager.Enqueue(() =>

@@ -149,6 +149,9 @@ namespace RebornToolbox.IPC
 
         [EzIPC("Lifestream.Abort", applyPrefix: false)]
         internal static readonly Action Abort;
+
+        [EzIPC("Lifestream.AethernetTeleport", applyPrefix: false)]
+        internal static readonly Func<string, bool> AethernetTeleport;
         internal static void Dispose()
             => IPCSubscriber_Common.DisposeAll(_disposalTokens);
     }
