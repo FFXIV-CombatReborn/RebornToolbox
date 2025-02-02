@@ -1,6 +1,7 @@
 ﻿using System.Numerics;
 using System.Text.RegularExpressions;
 using Dalamud.Game.Text.SeStringHandling;
+using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.ImGuiFileDialog;
 using Dalamud.Interface.ImGuiSeStringRenderer;
@@ -215,19 +216,39 @@ public class MBShoppingList_UI : Window
             ImGui.Text("This item cannot be purchased on the Market Board");
         }
 
+        var individualItem = Plugin.Configuration.ShoppingListConfig.ShowIndividualListings;
+        if (ImGui.Checkbox("Show individual listings", ref individualItem))
+        {
+            Plugin.Configuration.ShoppingListConfig.ShowIndividualListings = individualItem;
+            Plugin.Configuration.SaveConfig();
+        }
+
         // If data is present, display it
         if (item.MarketDataResponse != null && !item.IsFetchingData)
         {
-            OtterGui.ImGuiTable.DrawTable<ShoppingListItem.WorldListing>(
-                $"Market Availability##{item.ItemId}",
-                item.WorldListings,
-                DrawRow,
-                ImGuiTableFlags.Borders | ImGuiTableFlags.Sortable,
-                "World",
-                "Lowest Price",
-                "Total Listings");
+            if (Plugin.Configuration.ShoppingListConfig.ShowIndividualListings)
+            {
+                OtterGui.ImGuiTable.DrawTable<MarketDataListing>(
+                    $"Market Availability##{item.ItemId}",
+                    item.MarketDataResponse.Listings.OrderBy(l => l.Total),
+                    DrawIndividualRow,
+                    ImGuiTableFlags.Borders | ImGuiTableFlags.Sortable,
+                    "World",
+                    "Quantity",
+                    "Total Price");
+            }
+            else
+            {
+                OtterGui.ImGuiTable.DrawTable<ShoppingListItem.WorldListing>(
+                    $"Market Availability##{item.ItemId}",
+                    item.WorldListings,
+                    DrawRow,
+                    ImGuiTableFlags.Borders | ImGuiTableFlags.Sortable,
+                    "World",
+                    "Lowest Price",
+                    "Total Listings");
+            }
         }
-
         ImGui.EndChild();
     }
 
@@ -254,6 +275,31 @@ public class MBShoppingList_UI : Window
         ImGui.Text($"{obj.LowestPrice}");
         ImGui.TableSetColumnIndex(2);
         ImGui.Text($"{obj.Count}");
+    }
+
+    private void DrawIndividualRow(MarketDataListing obj)
+    {
+        ImGui.TableSetColumnIndex(0);
+        if (ImGui.Selectable($"{obj.WorldName}"))
+        {
+            if (!Lifestream_IPCSubscriber.IsEnabled)
+            {
+                Svc.Chat.PrintError($"[Reborn Toolbox] LifeStream is required to move between servers");
+                return;
+            }
+
+            _manager.TaskManager.Enqueue(() => Lifestream_IPCSubscriber.ExecuteCommand(obj.WorldName),
+                _manager.LifeStreamTaskConfig);
+            _manager.TaskManager.Enqueue(() => !Lifestream_IPCSubscriber.IsBusy(), _manager.LifeStreamTaskConfig);
+            _manager.TaskManager.Enqueue(GenericHelpers.IsScreenReady);
+            _manager.TaskManager.Enqueue(_manager.QueueMoveToMarketboardTasks);
+        }
+
+        ImGuiEx.Tooltip("Travel using LifeStream");
+        ImGui.TableSetColumnIndex(1);
+        ImGui.Text($"{obj.Quantity}");
+        ImGui.TableSetColumnIndex(2);
+        ImGui.Text($"{obj.Total}");
     }
 
     private unsafe void DrawItemSearch(ShoppingListItem item)
