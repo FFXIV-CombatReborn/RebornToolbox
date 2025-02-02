@@ -10,4 +10,5 @@ public class MBShoppingList_Config
     public bool UseVnavPathing { get; set; } = false;
     public bool RemoveQuantityAutomatically { get; set; } = false;
     public bool AllCharactersInventory { get; set; } = false;
+    public bool ShowIndividualListings { get; set; } = false;
 }
