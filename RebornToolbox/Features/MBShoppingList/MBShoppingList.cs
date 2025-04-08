@@ -1,13 +1,9 @@
 ﻿using System.Numerics;
 using Dalamud.Game.ClientState.Objects.Types;
-using Dalamud.Game.Inventory;
-using Dalamud.Game.Inventory.InventoryEventArgTypes;
-using Dalamud.Interface.Windowing;
 using Dalamud.Plugin.Ipc;
 using ECommons;
 using ECommons.Automation;
 using ECommons.Automation.NeoTaskManager;
-using ECommons.Commands;
 using ECommons.DalamudServices;
 using ECommons.GameHelpers;
 using FFXIVClientStructs.FFXIV.Client.Game;
@@ -21,9 +17,9 @@ namespace RebornToolbox.Features.MBShoppingList;
 
 public class MBShoppingList
 {
-    public static List<Item> AllItems;
+    public static List<Item> AllItems = new List<Item>();
 
-    public static List<Item> MarketableItems;
+    public static List<Item> MarketableItems = new List<Item>();
 
     public List<ShoppingListItem> WantedItems = [];
 
