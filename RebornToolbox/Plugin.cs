@@ -14,7 +14,7 @@ namespace RebornToolbox;
 
 public class Plugin : IDalamudPlugin
 {
-    public static Configuration Configuration { get; set; }
+    public static Configuration Configuration { get; set; } = null!;
     public MBShoppingList MBShoppingList;
     //public InvSort InventorySort;
     public ChocoboRacing ChocoboRacing;

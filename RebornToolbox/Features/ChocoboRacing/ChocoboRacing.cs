@@ -108,7 +108,7 @@ public class ChocoboRacing
             IsMoving = false;
         if (EzThrottler.Throttle("FeatherToTheMetal", 1500))
         {
-            if (Svc.Condition[ConditionFlag.BoundToDuty97])
+            if (Svc.Condition[ConditionFlag.InDutyQueue])
             {
                 ContentsFinderConfirm();
                 return;

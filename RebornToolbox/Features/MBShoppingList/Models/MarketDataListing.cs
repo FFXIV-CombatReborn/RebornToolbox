@@ -14,13 +14,13 @@ public class MarketDataListing
     /// Gets or sets the ID of the creator.
     /// </summary>
     [JsonPropertyName("creatorID")]
-    public string CreatorId { get; set; }
+    public string CreatorId { get; set; } = string.Empty;
 
     /// <summary>
     /// Gets or sets the name of the creator.
     /// </summary>
     [JsonPropertyName("creatorName")]
-    public string CreatorName { get; set; }
+    public string CreatorName { get; set; } = string.Empty;
 
     /// <summary>
     /// Gets or sets a value indicating whether the items are HQ.
@@ -44,7 +44,7 @@ public class MarketDataListing
     /// Gets or sets the ID of the listing.
     /// </summary>
     [JsonPropertyName("listingID")]
-    public string ListingId { get; set; }
+    public string ListingId { get; set; } = string.Empty;
 
     /// <summary>
     /// Gets or sets the list of the materias.
@@ -82,19 +82,19 @@ public class MarketDataListing
     /// Gets or sets the ID of the retainer.
     /// </summary>
     [JsonPropertyName("retainerID")]
-    public string RetainerId { get; set; }
+    public string RetainerId { get; set; } = string.Empty;
 
     /// <summary>
     /// Gets or sets the retainer's name.
     /// </summary>
     [JsonPropertyName("retainerName")]
-    public string RetainerName { get; set; }
+    public string RetainerName { get; set; } = string.Empty;
 
     /// <summary>
     /// Gets or sets the ID of the seller.
     /// </summary>
     [JsonPropertyName("sellerID")]
-    public string SellerId { get; set; }
+    public string SellerId { get; set; } = string.Empty;
 
     /// <summary>
     /// Gets or sets the ID of the stain.
@@ -118,5 +118,5 @@ public class MarketDataListing
     /// Gets or sets the name of the world.
     /// </summary>
     [JsonPropertyName("worldName")]
-    public string WorldName { get; set; }
+    public string WorldName { get; set; } = string.Empty;
 }

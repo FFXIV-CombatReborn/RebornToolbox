@@ -4,7 +4,6 @@ using ECommons;
 using ECommons.DalamudServices;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using Lumina.Excel.Sheets;
-using Lumina.Excel.Sheets;
 using Newtonsoft.Json;
 using RebornToolbox.IPC;
 
@@ -44,7 +43,8 @@ public class ShoppingListItem
 
     [Newtonsoft.Json.JsonIgnore] public Item? ItemRecord => _itemRecord;
 
-    [Newtonsoft.Json.JsonIgnore] public string Name => _itemRecord.Value.Name.ToString();
+    [Newtonsoft.Json.JsonIgnore]
+    public string Name => _itemRecord?.Name.ToString() ?? "Unknown Item";
 
     public uint ItemId { get; set; }
 
@@ -196,10 +196,10 @@ public class ShoppingListItem
 
     public class WorldListing
     {
-        public string WorldName { get; set; }
+        public string WorldName { get; set; } = string.Empty; // Initialize with a default value
         public int Count { get; set; }
         public long LowestPrice { get; set; }
-        public List<MarketDataListing> Listings { get; set; } = new List<MarketDataListing>();
+        public List<MarketDataListing> Listings { get; set; } = new List<MarketDataListing>(); // Initialize with an empty list
     }
 
     public void ClearDataResponse()
