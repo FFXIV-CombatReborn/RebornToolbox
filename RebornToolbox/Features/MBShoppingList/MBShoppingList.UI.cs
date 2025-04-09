@@ -1,4 +1,5 @@
-﻿using System.Numerics;
+﻿using System.Diagnostics;
+using System.Numerics;
 using System.Text.RegularExpressions;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Interface;
@@ -33,7 +34,7 @@ public class MBShoppingList_UI : Window
     private FileDialogManager _fileDialogManager;
     private MBShoppingList_UI_Selector _selector;
 
-    public MBShoppingList_UI(MBShoppingList manager) : base("Supermarket Sweep", ImGuiWindowFlags.None, false)
+    public MBShoppingList_UI(MBShoppingList manager) : base($"Supermarket Sweep##{manager.GetHashCode()}", ImGuiWindowFlags.None, false)
     {
         _manager = manager;
         _fileDialogManager = new FileDialogManager();
@@ -42,53 +43,63 @@ public class MBShoppingList_UI : Window
 
     public override void Draw()
     {
-        DrawItemAdd();
-        if (ImGui.Button("Import MakePlace List"))
+        ImGui.Text("Supermarket Sweep is now its own plugin! Click the button below to get the new version.");
+        if (ImGui.Button("Open GitHub"))
         {
-            SelectFile();
-        }
-        ImGui.SameLine();
-        if (ImGui.Button("Import from Clipboard"))
-        {
-            ExtractClipboardText();
-        }
-        ImGuiEx.Tooltip("Import items from clipboard using the following format:\n'10x Ipe Log'\n'999x Iron Ore");
-
-        if (ImGuiUtil.GenericEnumCombo("Region/Datacenter", 300, Plugin.Configuration.ShoppingListConfig.ShoppingRegion, out RegionType newRegion, r => r.ToFriendlyString()))
-        {
-            Plugin.Configuration.ShoppingListConfig.ShoppingRegion = newRegion;
-            Plugin.Configuration.SaveConfig();
-        }
-
-        ImGui.SetNextItemWidth(100);
-
-
-        if (Plugin.Configuration.ExpertMode)
-        {
-            if (ImGuiUtil.DrawDisabledButton("Refresh All Market Data", new Vector2(0, 0),
-                    "Refresh all Market Data for all items in the list\n(Can only be run every 30 seconds)\nWARNING: This will cause the Universalis servers to suffer!",
-                    DateTime.Now < _lastMassRefresh + TimeSpan.FromSeconds(30)))
+            Process.Start(new ProcessStartInfo()
             {
-                _lastMassRefresh = DateTime.Now;
-                var insult = GetRandomInsult();
-                Svc.Chat.Print($"[Reborn Toolbox] {insult}");
-                foreach (var item in _manager.WantedItems)
-                {
-                    item.ClearDataResponse();
-                    Task.Run(item.GetMarketDataResponseAsync);
-                }
-            }
+                FileName = "https://github.com/NostraThomas99/SupermarketSweep",
+                UseShellExecute = true,
+                Verb = string.Empty
+            });
         }
-
-        ImGui.Spacing();
-        ImGui.Spacing();
-        ImGui.Separator();
-
-        _selector.Draw(200);
-        ImGui.SameLine();
-        DrawWantedItem(_selector.Current);
-
-        _fileDialogManager.Draw();
+        // DrawItemAdd();
+        // if (ImGui.Button("Import MakePlace List"))
+        // {
+        //     SelectFile();
+        // }
+        // ImGui.SameLine();
+        // if (ImGui.Button("Import from Clipboard"))
+        // {
+        //     ExtractClipboardText();
+        // }
+        // ImGuiEx.Tooltip("Import items from clipboard using the following format:\n'10x Ipe Log'\n'999x Iron Ore");
+        //
+        // if (ImGuiUtil.GenericEnumCombo("Region/Datacenter", 300, Plugin.Configuration.ShoppingListConfig.ShoppingRegion, out RegionType newRegion, r => r.ToFriendlyString()))
+        // {
+        //     Plugin.Configuration.ShoppingListConfig.ShoppingRegion = newRegion;
+        //     Plugin.Configuration.SaveConfig();
+        // }
+        //
+        // ImGui.SetNextItemWidth(100);
+        //
+        //
+        // if (Plugin.Configuration.ExpertMode)
+        // {
+        //     if (ImGuiUtil.DrawDisabledButton("Refresh All Market Data", new Vector2(0, 0),
+        //             "Refresh all Market Data for all items in the list\n(Can only be run every 30 seconds)\nWARNING: This will cause the Universalis servers to suffer!",
+        //             DateTime.Now < _lastMassRefresh + TimeSpan.FromSeconds(30)))
+        //     {
+        //         _lastMassRefresh = DateTime.Now;
+        //         var insult = GetRandomInsult();
+        //         Svc.Chat.Print($"[Reborn Toolbox] {insult}");
+        //         foreach (var item in _manager.WantedItems)
+        //         {
+        //             item.ClearDataResponse();
+        //             Task.Run(item.GetMarketDataResponseAsync);
+        //         }
+        //     }
+        // }
+        //
+        // ImGui.Spacing();
+        // ImGui.Spacing();
+        // ImGui.Separator();
+        //
+        // _selector.Draw(200);
+        // ImGui.SameLine();
+        // DrawWantedItem(_selector.Current);
+        //
+        // _fileDialogManager.Draw();
     }
 
     private void ExtractClipboardText()
